@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sqlite3
 import pandas as pd
 
@@ -8,7 +9,7 @@ def print_and_exec(cursor, query):
 
 
 def process_db_file(db_path):
-    print('\n\Processing "%s"' % db_path)
+    print('\nProcessing "%s"' % db_path)
 
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
@@ -28,7 +29,7 @@ def process_db_file(db_path):
     print_and_exec(c, query)
     conn.commit()
 
-    df = pd.read_csv('fields_of_interest_trial.txt')
+    df = pd.read_csv('fields_of_interest.txt')
     print('\nEnsuring healthy cases')
     for row in df.iterrows():
         new_name = row[1]['new_name']
@@ -41,8 +42,7 @@ def process_db_file(db_path):
 
 
 def mark_healthy():
-    # db_paths = ['../data/PTD1_BASA_CLD.GDB.sqlite', '../data/PTD2_BASA_CLD.GDB.sqlite']
-    db_paths = ['../data/PTD2_BASA_CLD.GDB.sqlite']
+    db_paths = ['../data/PTD1_BASA_CLD.GDB.sqlite', '../data/PTD2_BASA_CLD.GDB.sqlite']
 
     for db_path in db_paths:
         process_db_file(db_path)

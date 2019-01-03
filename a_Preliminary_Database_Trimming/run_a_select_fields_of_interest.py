@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import shutil
 import sqlite3
@@ -14,19 +15,22 @@ def process_db_file(db_path):
     if not os.path.isfile(db_path + '.bak'):
         print('Creating backup file')
         shutil.copyfile(db_path, db_path + '.bak')
+
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
+
     column_dtypes = {}
     result = print_and_exec(c, 'PRAGMA table_info(''PROTOCOL'')')
     for row in result:
         column_dtypes[row[1].lower()] = row[2]
-    # df = pd.read_csv('fields_of_interest.txt')
-    df = pd.read_csv('fields_of_interest_trial.txt')
+
     print('\nCreating empty PROTOCOL2 table')
     print_and_exec(c, 'DROP TABLE IF EXISTS PROTOCOL2')
     print_and_exec(c, 'CREATE TABLE PROTOCOL2 (id INTEGER PRIMARY KEY)')
     print_and_exec(c, 'INSERT INTO protocol2 (id) SELECT id FROM protocol')
     conn.commit()
+
+    df = pd.read_csv('fields_of_interest.txt')
     query_add1 = 'ALTER TABLE protocol2 ADD COLUMN %s %s'
     query_add2 = 'ALTER TABLE protocol2 ADD COLUMN %s boolean'
     query_copy = 'UPDATE protocol2 SET %s = (SELECT p.%s FROM protocol p WHERE p.id = protocol2.id)'
@@ -51,8 +55,7 @@ def process_db_file(db_path):
 
 
 def select_fields_of_interest():
-    # db_paths = ['../data/PTD1_BASA_CLD.GDB.sqlite', '../data/PTD2_BASA_CLD.GDB.sqlite']
-    db_paths = ['../data/PTD2_BASA_CLD.GDB.sqlite']
+    db_paths = ['../data/PTD1_BASA_CLD.GDB.sqlite', '../data/PTD2_BASA_CLD.GDB.sqlite']
 
     for db_path in db_paths:
         process_db_file(db_path)

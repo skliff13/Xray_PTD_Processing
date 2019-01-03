@@ -1,6 +1,0 @@
-old_name,new_name
-numberkart,-
-opisanie,-
-POL,is_male
-tuberkules,class_tuberculosis
-fibroz,class_fibrosis

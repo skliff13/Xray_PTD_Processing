@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 from run_a_select_fields_of_interest import select_fields_of_interest
 from run_b_mark_healthy import mark_healthy
