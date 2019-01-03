@@ -4,17 +4,17 @@ import pandas as pd
 
 def print_and_exec(cursor, query):
     print('>> "' + query + '"')
-    cursor.execute(query)
+    return cursor.execute(query)
 
 
-def main():
-    db_path = '../data/PTD2_BASA_CLD.GDB.sqlite'
+def process_db_file(db_path):
+    print('\n\Processing "%s"' % db_path)
 
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
     column_dtypes = {}
-    result = c.execute('PRAGMA table_info(''PROTOCOL2'')')
+    result = print_and_exec(c, 'PRAGMA table_info(''PROTOCOL2'')')
     for row in result:
         column_dtypes[row[1].lower()] = row[2]
 
@@ -40,5 +40,13 @@ def main():
     conn.commit()
 
 
+def mark_healthy():
+    # db_paths = ['../data/PTD1_BASA_CLD.GDB.sqlite', '../data/PTD2_BASA_CLD.GDB.sqlite']
+    db_paths = ['../data/PTD2_BASA_CLD.GDB.sqlite']
+
+    for db_path in db_paths:
+        process_db_file(db_path)
+
+
 if __name__ == '__main__':
-    main()
+    mark_healthy()

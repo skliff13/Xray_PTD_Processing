@@ -11,4 +11,5 @@ __pycache__/
 
 #### User files and folders
 data/*.sqlite
+data/*.bak
 data/SQLiteSpy.*
