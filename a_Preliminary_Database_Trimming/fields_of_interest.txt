@@ -14,7 +14,6 @@ POL,is_male
 pnevmoskleroz,class_pneumosclerosis
 emfisema,class_emphysema
 fibroz,class_fibrosis
-deform_legkih,class_lungs_deformation
 kalcinoz,class_calcinosis
 pnevmonija,class_pneumonia
 o4agovie_teni,class_focal_shadows

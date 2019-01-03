@@ -40,6 +40,9 @@ def process_db_file(db_path):
         old_name = row[1]['old_name']
         new_name = row[1]['new_name']
 
+        if old_name == 'tuberkules' and not old_name in column_dtypes:
+            old_name = 'tuberkulez'
+
         if new_name == '-':
             new_name = old_name
             print('\nCopying values from %s to %s' % (old_name, new_name))
