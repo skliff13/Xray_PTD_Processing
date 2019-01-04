@@ -43,7 +43,6 @@ def process_db_file(db_path):
 
 def mark_healthy():
     db_paths = ['../data/PTD1_BASA_CLD.GDB.sqlite', '../data/PTD2_BASA_CLD.GDB.sqlite']
-    db_paths = db_paths[1:]
 
     for db_path in db_paths:
         process_db_file(db_path)
