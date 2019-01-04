@@ -19,7 +19,7 @@ def process_db_file(db_path):
     class_of_interest = 'class_tuberculosis'
 
     column_dtypes = {}
-    result = print_and_exec(c, 'PRAGMA table_info(''PROTOCOL2'')')
+    result = print_and_exec(c, 'PRAGMA table_info(PROTOCOL2)')
     for row in result:
         column_dtypes[row[1].lower()] = row[2]
 
@@ -45,7 +45,7 @@ def process_db_file(db_path):
         query = ' UPDATE protocol2 SET match_tuberculosis = 1 ' \
             ' WHERE id = (SELECT id FROM protocol2 WHERE class_healthy AND %s = 0 ' \
             ' AND is_male = (SELECT is_male FROM protocol2 WHERE id = %i) ' \
-            ' ORDER BY ABS(SUBSTR((SELECT dateroshd FROM protocol2 WHERE id = %i), 7, 4) - SUBSTR(dateroshd, 7, 4)) ' \
+            ' ORDER BY ABS((SELECT age FROM protocol2 WHERE id = %i) - age) ' \
             ' LIMIT 1)'
         query = query % (match_column_name, id, id)
 

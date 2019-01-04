@@ -20,7 +20,7 @@ def process_db_file(db_path):
     c = conn.cursor()
 
     column_dtypes = {}
-    result = print_and_exec(c, 'PRAGMA table_info(''PROTOCOL'')')
+    result = print_and_exec(c, 'PRAGMA table_info(PROTOCOL)')
     for row in result:
         column_dtypes[row[1].lower()] = row[2]
 
@@ -59,6 +59,7 @@ def process_db_file(db_path):
 
 def select_fields_of_interest():
     db_paths = ['../data/PTD1_BASA_CLD.GDB.sqlite', '../data/PTD2_BASA_CLD.GDB.sqlite']
+    db_paths = db_paths[1:]
 
     for db_path in db_paths:
         process_db_file(db_path)

@@ -17,7 +17,7 @@ def process_db_file(db_path):
     c = conn.cursor()
 
     column_dtypes = {}
-    result = print_and_exec(c, 'PRAGMA table_info(''PROTOCOL2'')')
+    result = print_and_exec(c, 'PRAGMA table_info(PROTOCOL2)')
     for row in result:
         column_dtypes[row[1].lower()] = row[2]
 

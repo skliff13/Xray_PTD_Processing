@@ -19,29 +19,18 @@ def process_db_file(db_path):
     for row in result:
         column_dtypes[row[1].lower()] = row[2]
 
-    if 'class_healthy' not in column_dtypes:
-        print('\nCreating class_healthy data column')
-        query = 'ALTER TABLE protocol2 ADD COLUMN class_healthy boolean'
+    if 'age' not in column_dtypes:
+        print('\nCreating age column')
+        query = 'ALTER TABLE protocol2 ADD COLUMN age integer'
         print_and_exec(c, query)
 
-    print('\nUpdating class_healthy values')
-    query = 'UPDATE protocol2 SET class_healthy = (opisanie in (\'Лёгочные поля чистые. Корни структурны.\'))'
+    print('\nUpdating age values')
+    query = 'UPDATE protocol2 SET age = (substr(dateissl, 7, 4) - substr(dateroshd, 7, 4))'
     print_and_exec(c, query)
     conn.commit()
 
-    df = pd.read_csv('fields_of_interest.txt')
-    print('\nEnsuring healthy cases')
-    for row in df.iterrows():
-        new_name = row[1]['new_name']
 
-        if new_name.startswith('class_'):
-            query = 'UPDATE protocol2 SET class_healthy = 0 WHERE %s = 1' % new_name
-            print_and_exec(c, query)
-
-    conn.commit()
-
-
-def mark_healthy():
+def calc_age():
     db_paths = ['../data/PTD1_BASA_CLD.GDB.sqlite', '../data/PTD2_BASA_CLD.GDB.sqlite']
     db_paths = db_paths[1:]
 
@@ -50,4 +39,4 @@ def mark_healthy():
 
 
 if __name__ == '__main__':
-    mark_healthy()
+    calc_age()
