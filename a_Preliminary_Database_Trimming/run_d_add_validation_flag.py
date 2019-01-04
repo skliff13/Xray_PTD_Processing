@@ -31,7 +31,7 @@ def process_db_file(db_path):
     _, ptd = os.path.split(db_path)
     ptd = ptd[:4]
 
-    batch_size = 1000
+    batch_size = 10000
     df = pd.read_csv('../data/files_info_all_together.txt')
     counter = 0
     values = []
@@ -52,19 +52,20 @@ def process_db_file(db_path):
 
     if values:
         update_validation_batch(c, values)
+        print('Final batch')
 
     conn.commit()
 
 
 def update_validation_batch(c, values):
     values_str = ', \n'.join(values)
-    query = 'WITH Tmp(path, valid) as (VALUES%s)\n' \
-            'UPDATE protocol2 SET xray_validated = (SELECT valid FROM Tmp WHERE protocol2.pngfilepath = Tmp.path)' \
+    query = 'WITH Tmp(path, valid) as (VALUES%s) \n' \
+            'UPDATE protocol2 SET xray_validated = (SELECT valid FROM Tmp WHERE protocol2.pngfilepath = Tmp.path) ' \
             '\nWHERE pngfilepath IN (SELECT path from Tmp)' % values_str
-    print_and_exec(c, query)
+    c.execute(query)
 
 
-def select_fields_of_interest():
+def add_validation_flag():
     db_paths = ['../data/PTD1_BASA_CLD.GDB.sqlite', '../data/PTD2_BASA_CLD.GDB.sqlite']
 
     for db_path in db_paths:
@@ -72,4 +73,4 @@ def select_fields_of_interest():
 
 
 if __name__ == '__main__':
-    select_fields_of_interest()
+    add_validation_flag()

@@ -17,6 +17,5 @@ fibroz,class_fibrosis
 kalcinoz,class_calcinosis
 pnevmonija,class_pneumonia
 o4agovie_teni,class_focal_shadows
-petrificati,class_petrification
 bronhit,class_bronchitis
 tuberkules,class_tuberculosis
