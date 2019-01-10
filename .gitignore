@@ -17,3 +17,4 @@ data/SQLiteSpy.*
 data/files_info_all_together.txt
 _tmp/
 a_Preliminary_Database_Trimming/log.txt
+b_Make_Study_Groups/study_group_*.txt
