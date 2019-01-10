@@ -17,6 +17,7 @@ def process_db_file(db_path):
     c = conn.cursor()
 
     class_of_interest = 'class_tuberculosis'
+    print('\nClass of interest: ' + class_of_interest)
 
     column_dtypes = {}
     result = print_and_exec(c, 'PRAGMA table_info(PROTOCOL2)')
@@ -32,22 +33,22 @@ def process_db_file(db_path):
     print_and_exec(c, 'UPDATE protocol2 SET %s = 0' % match_column_name)
     conn.commit()
 
-    query = 'SELECT id FROM protocol2 where %s' % class_of_interest
+    query = 'SELECT id FROM protocol2 where xray_validated AND %s' % class_of_interest
     selection = print_and_exec(c, query)
 
-    ids = []
+    case_ids = []
     for row in selection:
-        ids.append(row[0])
+        case_ids.append(row[0])
 
-    for i, id in enumerate(ids):
-        print('Matching case %i / %i' % (i + 1, len(ids)))
+    for i, case_id in enumerate(case_ids):
+        print('Matching case %i / %i' % (i + 1, len(case_ids)))
 
-        query = ' UPDATE protocol2 SET match_tuberculosis = 1 ' \
-            ' WHERE id = (SELECT id FROM protocol2 WHERE class_healthy AND %s = 0 ' \
-            ' AND is_male = (SELECT is_male FROM protocol2 WHERE id = %i) ' \
-            ' ORDER BY ABS((SELECT age FROM protocol2 WHERE id = %i) - age) ' \
-            ' LIMIT 1)'
-        query = query % (match_column_name, id, id)
+        query = ' UPDATE protocol2 SET match_tuberculosis = 1 '
+        query += ' WHERE id = (SELECT id FROM protocol2 WHERE class_healthy AND xray_validated AND %s = 0 '
+        query += ' AND is_male = (SELECT is_male FROM protocol2 WHERE id = %i) '
+        query += ' ORDER BY ABS((SELECT age FROM protocol2 WHERE id = %i) - age) '
+        query += ' LIMIT 1)'
+        query = query % (match_column_name, case_id, case_id)
 
         print_and_exec(c, query)
         conn.commit()

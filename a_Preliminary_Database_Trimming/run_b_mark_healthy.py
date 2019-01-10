@@ -25,7 +25,10 @@ def process_db_file(db_path):
         print_and_exec(c, query)
 
     print('\nUpdating class_healthy values')
-    query = 'UPDATE protocol2 SET class_healthy = (opisanie in (\'Лёгочные поля чистые. Корни структурны.\'))'
+    query = 'UPDATE protocol2 SET class_healthy = (opisanie in ('
+    query += '\'Лёгочные поля чистые. Корни структурны.\', '
+    query += '\'Очаговые и инфильтративные тени не определяются. Корни легких структурные.\', '
+    query += '\'При компьютерной рентгенографии патологических изменений не обнаружено.\'))'
     print_and_exec(c, query)
     conn.commit()
 

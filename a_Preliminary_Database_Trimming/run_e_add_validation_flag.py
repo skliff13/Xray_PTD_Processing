@@ -59,9 +59,9 @@ def process_db_file(db_path):
 
 def update_validation_batch(c, values):
     values_str = ', \n'.join(values)
-    query = 'WITH Tmp(path, valid) as (VALUES%s) \n' \
-            'UPDATE protocol2 SET xray_validated = (SELECT valid FROM Tmp WHERE protocol2.pngfilepath = Tmp.path) ' \
-            '\nWHERE pngfilepath IN (SELECT path from Tmp)' % values_str
+    query = 'WITH Tmp(path, valid) as (VALUES\n%s) \n' % values_str
+    query += 'UPDATE protocol2 SET xray_validated = (SELECT valid FROM Tmp WHERE protocol2.pngfilepath = Tmp.path) \n'
+    query += 'WHERE pngfilepath IN (SELECT path from Tmp)'
     c.execute(query)
 
 
