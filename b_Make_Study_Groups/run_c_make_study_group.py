@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from random import shuffle
 
+
 def print_and_exec(cursor, query):
     print('>> "' + query + '"')
     return cursor.execute(query)
@@ -78,7 +79,9 @@ def make_study_group():
     print('Training: %i vs. %i,    Validation: %i vs. %i' % (train_controls, train_class, val_controls, val_class))
 
     df = pd.DataFrame(data={'path': paths, 'filename': filenames, 'class_number': class_numbers, 'is_val': is_vals})
-    df.to_csv('study_group_%s_.txt' % class_of_interest, index=False)
+    out_filepath = '../data/study_group_%s_.txt' % class_of_interest
+    print('Saving data to "%s"' % out_filepath)
+    df.to_csv(out_filepath, index=False)
 
 
 if __name__ == '__main__':
