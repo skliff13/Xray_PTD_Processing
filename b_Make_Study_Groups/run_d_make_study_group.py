@@ -18,7 +18,7 @@ def process_db_file(db_path, class_columns):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
-    query = 'SELECT pngfilepath, %s FROM protocol2' % class_columns[1]
+    query = 'SELECT pngfilepath, %s, age, is_male FROM protocol2' % class_columns[1]
     query += ' WHERE (xray_validated OR xray_validated IS NULL) AND age >= 10 AND age <= 69'
     query += ' AND (%s OR %s) ' % (class_columns[0], class_columns[1])
     return print_and_exec(c, query)
@@ -27,7 +27,7 @@ def process_db_file(db_path, class_columns):
 def make_study_group():
     db_paths = ['../data/PTD1_BASA_CLD.GDB.sqlite', '../data/PTD2_BASA_CLD.GDB.sqlite']
 
-    class_of_interest = 'class_abnormal_lungs'
+    class_of_interest = 'class_tuberculosis'
     print('\nClass of interest: ' + class_of_interest)
 
     match_class = class_of_interest.replace('class_', 'match_')
@@ -37,6 +37,8 @@ def make_study_group():
     filenames = []
     class_numbers = []
     card_numbers = []
+    ages = []
+    is_males = []
     for db_path in db_paths:
         records = process_db_file(db_path, class_columns)
 
@@ -47,6 +49,8 @@ def make_study_group():
             filenames.append(filename)
             class_numbers.append(record[1])
             card_numbers.append(int(filename.split('_')[0]))
+            ages.append(record[2])
+            is_males.append(record[3])
 
     unique_card_numbers = list(set(card_numbers))
     shuffle(unique_card_numbers)
@@ -79,7 +83,8 @@ def make_study_group():
     print('\nControls vs. Class:')
     print('Training: %i vs. %i,    Validation: %i vs. %i' % (train_controls, train_class, val_controls, val_class))
 
-    df = pd.DataFrame(data={'path': paths, 'filename': filenames, 'class_number': class_numbers, 'is_val': is_vals})
+    df = pd.DataFrame(data={'path': paths, 'filename': filenames, 'age': ages, 'is_male': is_males,
+                            'class_number': class_numbers, 'is_val': is_vals})
     out_filepath = '../data/study_group_%s_.txt' % class_of_interest
     print('Saving data to "%s"' % out_filepath)
     df.to_csv(out_filepath, index=False)
