@@ -16,5 +16,5 @@ data/*.bak
 data/SQLiteSpy.*
 data/files_info_all_together.txt
 _tmp/
-a_Preliminary_Database_Trimming/log.txt
+data/calculated_statistics.txt
 data/study_group_*.txt

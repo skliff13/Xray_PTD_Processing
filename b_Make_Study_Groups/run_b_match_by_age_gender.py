@@ -16,7 +16,7 @@ def process_db_file(db_path):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
-    class_of_interest = 'class_tuberculosis'
+    class_of_interest = 'class_abnormal_lungs'
     print('\nClass of interest: ' + class_of_interest)
 
     column_dtypes = {}
@@ -43,12 +43,12 @@ def process_db_file(db_path):
     for i, case_id in enumerate(case_ids):
         print('Matching case %i / %i' % (i + 1, len(case_ids)))
 
-        query = ' UPDATE protocol2 SET match_tuberculosis = 1 '
+        query = ' UPDATE protocol2 SET %s = 1 '
         query += ' WHERE id = (SELECT id FROM protocol2 WHERE class_healthy AND xray_validated AND %s = 0 '
         query += ' AND is_male = (SELECT is_male FROM protocol2 WHERE id = %i) '
         query += ' ORDER BY ABS((SELECT age FROM protocol2 WHERE id = %i) - age) '
         query += ' LIMIT 1)'
-        query = query % (match_column_name, case_id, case_id)
+        query = query % (match_column_name, match_column_name, case_id, case_id)
 
         print_and_exec(c, query)
         conn.commit()
