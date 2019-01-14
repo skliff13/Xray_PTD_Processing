@@ -16,7 +16,7 @@ def process_db_file(db_path):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
-    class_of_interest = 'class_abnormal_lungs'
+    class_of_interest = 'class_tuberculosis'
     print('\nClass of interest: ' + class_of_interest)
 
     column_dtypes = {}
@@ -33,25 +33,59 @@ def process_db_file(db_path):
     print_and_exec(c, 'UPDATE protocol2 SET %s = 0' % match_column_name)
     conn.commit()
 
-    query = 'SELECT id FROM protocol2 where xray_validated AND %s' % class_of_interest
+    query = 'SELECT age, is_male, count(1) FROM protocol2 where xray_validated AND %s GROUP BY age, is_male'
+    query = query % class_of_interest
     selection = print_and_exec(c, query)
 
-    case_ids = []
+    age_gender_counts = []
     for row in selection:
-        case_ids.append(row[0])
+        age_gender_counts.append([row[0], row[1], row[2]])
 
-    for i, case_id in enumerate(case_ids):
-        print('Matching case %i / %i' % (i + 1, len(case_ids)))
+    for i, age_gender_count in enumerate(age_gender_counts):
+        print('Matching age-gender %i / %i' % (i + 1, len(age_gender_counts)))
 
-        query = ' UPDATE protocol2 SET %s = 1 '
-        query += ' WHERE id = (SELECT id FROM protocol2 WHERE class_healthy AND xray_validated AND %s = 0 '
-        query += ' AND is_male = (SELECT is_male FROM protocol2 WHERE id = %i) '
-        query += ' ORDER BY ABS((SELECT age FROM protocol2 WHERE id = %i) - age) '
-        query += ' LIMIT 1)'
-        query = query % (match_column_name, match_column_name, case_id, case_id)
+        age = age_gender_count[0]
+        is_male = age_gender_count[1]
+        count = age_gender_count[2]
+
+        age_span, validated_xrays_only = get_minimum_selection_parameters(age, c, count, is_male, match_column_name)
+
+        query = ' UPDATE protocol2 SET %s = 1 WHERE id IN ' % match_column_name
+        query += ' (SELECT id FROM protocol2 WHERE class_healthy AND %s = 0 ' % match_column_name
+        if validated_xrays_only:
+            query += ' AND xray_validated '
+        else:
+            query += ' AND (xray_validated OR xray_validated IS NULL) '
+        query += ' AND ABS(age - %i) <= %i AND is_male = %i ' % (age, age_span, is_male)
+        if age_span > 0:
+            query += ' ORDER BY ABS(age - %i) ' % age
+        query += ' LIMIT %i)' % count
 
         print_and_exec(c, query)
         conn.commit()
+
+
+def get_minimum_selection_parameters(age, c, count, is_male, match_column_name):
+    age_span = 0
+    validated_xrays_only = True
+
+    while True:
+        query = 'SELECT COUNT(1) FROM protocol2 WHERE class_healthy AND %s = 0 ' % match_column_name
+        if validated_xrays_only:
+            query += ' AND xray_validated '
+        else:
+            query += ' AND (xray_validated OR xray_validated IS NULL) '
+        query += ' AND ABS(age - %i) <= %i AND is_male = %i ' % (age, age_span, is_male)
+        result = c.execute(query)
+
+        for row in result:
+            if row[0] >= count:
+                return age_span, validated_xrays_only
+
+        if validated_xrays_only:
+            validated_xrays_only = False
+        else:
+            age_span += 1
 
 
 def select_fields_of_interest():

@@ -20,10 +20,10 @@ def process_db_file(db_path, class_columns):
     all_ages = [[[], []], [[], []]]
     for is_male in range(2):
         for ic, class_column in enumerate(class_columns):
-            query = ' SELECT age FROM protocol2 '
-            query += ' WHERE is_male = %i ' % is_male
-            query += ' AND %s ' % class_column
-            query += ' AND xray_validated '
+            query = ' SELECT age FROM protocol2'
+            query += ' WHERE is_male = %i' % is_male
+            query += ' AND %s' % class_column
+            query += ' AND (xray_validated OR xray_validated IS NULL)'
             result = print_and_exec(c, query)
 
             ages = []
@@ -38,7 +38,7 @@ def process_db_file(db_path, class_columns):
 def select_fields_of_interest():
     db_paths = ['../data/PTD1_BASA_CLD.GDB.sqlite', '../data/PTD2_BASA_CLD.GDB.sqlite']
 
-    class_of_interest = 'class_abnormal_lungs'
+    class_of_interest = 'class_tuberculosis'
     print('\nClass of interest: ' + class_of_interest)
 
     match_class = class_of_interest.replace('class_', 'match_')

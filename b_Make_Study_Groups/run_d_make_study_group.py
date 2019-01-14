@@ -19,7 +19,8 @@ def process_db_file(db_path, class_columns):
     c = conn.cursor()
 
     query = 'SELECT pngfilepath, %s FROM protocol2' % class_columns[1]
-    query += ' WHERE xray_validated AND (%s OR %s) ' % (class_columns[0], class_columns[1])
+    query += ' WHERE (xray_validated OR xray_validated IS NULL)'
+    query += ' AND (%s OR %s) ' % (class_columns[0], class_columns[1])
     return print_and_exec(c, query)
 
 
