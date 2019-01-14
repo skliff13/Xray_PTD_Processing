@@ -19,7 +19,7 @@ def process_db_file(db_path, class_columns):
     c = conn.cursor()
 
     query = 'SELECT pngfilepath, %s FROM protocol2' % class_columns[1]
-    query += ' WHERE (xray_validated OR xray_validated IS NULL)'
+    query += ' WHERE (xray_validated OR xray_validated IS NULL) AND age >= 10 AND age <= 69'
     query += ' AND (%s OR %s) ' % (class_columns[0], class_columns[1])
     return print_and_exec(c, query)
 
@@ -27,7 +27,7 @@ def process_db_file(db_path, class_columns):
 def make_study_group():
     db_paths = ['../data/PTD1_BASA_CLD.GDB.sqlite', '../data/PTD2_BASA_CLD.GDB.sqlite']
 
-    class_of_interest = 'class_tuberculosis'
+    class_of_interest = 'class_abnormal_lungs'
     print('\nClass of interest: ' + class_of_interest)
 
     match_class = class_of_interest.replace('class_', 'match_')

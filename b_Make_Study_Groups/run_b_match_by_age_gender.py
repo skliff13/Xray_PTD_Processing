@@ -16,7 +16,7 @@ def process_db_file(db_path):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
-    class_of_interest = 'class_tuberculosis'
+    class_of_interest = 'class_abnormal_lungs'
     print('\nClass of interest: ' + class_of_interest)
 
     column_dtypes = {}
@@ -37,9 +37,12 @@ def process_db_file(db_path):
     query = query % class_of_interest
     selection = print_and_exec(c, query)
 
+    min_age = 10
+    max_age = 69
     age_gender_counts = []
     for row in selection:
-        age_gender_counts.append([row[0], row[1], row[2]])
+        if min_age <= row[0] <= max_age:
+            age_gender_counts.append([row[0], row[1], row[2]])
 
     for i, age_gender_count in enumerate(age_gender_counts):
         print('Matching age-gender %i / %i' % (i + 1, len(age_gender_counts)))
