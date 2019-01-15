@@ -16,6 +16,7 @@ def process_db_file(db_path):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
+    # class_of_interest = 'class_tuberculosis'
     class_of_interest = 'class_abnormal_lungs'
     print('\nClass of interest: ' + class_of_interest)
 
@@ -61,7 +62,7 @@ def process_db_file(db_path):
             query += ' AND (xray_validated OR xray_validated IS NULL) '
         query += ' AND ABS(age - %i) <= %i AND is_male = %i ' % (age, age_span, is_male)
         if age_span > 0:
-            query += ' ORDER BY ABS(age - %i) ' % age
+            query += ' ORDER BY (xray_validated IS NULL), ABS(age - %i) ' % age
         query += ' LIMIT %i)' % count
 
         print_and_exec(c, query)
@@ -85,8 +86,9 @@ def get_minimum_selection_parameters(age, c, count, is_male, match_column_name):
             if row[0] >= count:
                 return age_span, validated_xrays_only
 
-        if validated_xrays_only:
+        if validated_xrays_only and age_span == 10:
             validated_xrays_only = False
+            age_span = 0
         else:
             age_span += 1
 
