@@ -27,7 +27,8 @@ def process_db_file(db_path, class_columns):
 def make_study_group():
     db_paths = ['../data/PTD1_BASA_CLD.GDB.sqlite', '../data/PTD2_BASA_CLD.GDB.sqlite']
 
-    class_of_interest = 'class_tuberculosis'
+    # class_of_interest = 'class_tuberculosis'
+    class_of_interest = 'class_abnormal_lungs'
     print('\nClass of interest: ' + class_of_interest)
 
     match_class = class_of_interest.replace('class_', 'match_')
