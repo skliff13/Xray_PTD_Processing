@@ -17,13 +17,11 @@ def imresize(m, new_shape, order=1, mode='constant'):
     return m.astype(dtype=dtype)
 
 
-def process_row(out_img_dir, row, original_data_dir, preview_size):
+def process_row(out_img_dir, row, data_dir, preview_size):
     img_path = row[1]['path']
     filename = row[1]['filename']
-    class_number = row[1]['class_number']
-    is_val = row[1]['is_val']
 
-    img_path = os.path.join(original_data_dir, img_path)
+    img_path = os.path.join(data_dir, img_path)
     found_files = glob(img_path)
 
     if found_files:
@@ -32,9 +30,9 @@ def process_row(out_img_dir, row, original_data_dir, preview_size):
         img = imresize(img, (preview_size, preview_size))
 
         box = [round(0.2539 * img.shape[0] - 1), round(0.4915 * img.shape[0] - 1)]
-        values = img[box[0]:box[1], box[0]:box[1]].flatten()
-        q1 = np.percentile(values, 5)
-        q2 = np.percentile(values, 95)
+        intensities = img[box[0]:box[1], box[0]:box[1]].flatten()
+        q1 = np.percentile(intensities, 5)
+        q2 = np.percentile(intensities, 95)
         img = 0.2 + 0.6 * (img - q1) / (q2 - q1)
 
         img[img < 0] = 0
@@ -45,7 +43,7 @@ def process_row(out_img_dir, row, original_data_dir, preview_size):
 
 
 def prepare_previews():
-    original_data_dir = 'e:/'
+    data_dir = 'e:/'
 
     class_of_interest = 'tuberculosis'
     # class_of_interest = 'abnormal_lungs'
@@ -65,7 +63,7 @@ def prepare_previews():
         if i % 100 == 0:
             print('%i / %i' % (i, df.shape[0]))
 
-        process_row(out_img_dir, row, original_data_dir, preview_size)
+        process_row(out_img_dir, row, data_dir, preview_size)
 
 
 if __name__ == '__main__':
