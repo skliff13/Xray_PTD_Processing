@@ -15,6 +15,7 @@ data/*.sqlite-journal
 data/*.bak
 data/SQLiteSpy.*
 data/files_info_all_together.txt
+data/xray_test/
 _tmp/
 data/calculated_statistics.txt
 data/study_group_*.txt
