@@ -3,7 +3,7 @@ import os
 import pathlib
 import numpy as np
 import pandas as pd
-from skimage import io, transform
+from skimage import io, transform, exposure
 from random import randint
 from scipy.ndimage.measurements import label
 
@@ -61,7 +61,7 @@ def process_ith_augmented(class_number, filename, i, imgs, is_val, masks, out_im
 
     noise = np.random.normal(mean_intensity, std_intensity, img.shape)
     segmented = img
-    # segmented = img * mask + noise * (1 - mask)
+    # segmented = segmented * mask + noise * (1 - mask)
     segmented[segmented < 0] = 0
     segmented[segmented > 1] = 1
 
@@ -153,7 +153,8 @@ def process_row(out_img_dir, row, data_dir, to_augment, train_classes, train_pat
             else:
                 img = img0
 
-            img = normalize_by_lung_intensities(img, mask)
+            # img = normalize_by_lung_intensities(img, mask)
+            img = exposure.equalize_hist(img)
 
             out_shape = (256, 256)
             img = imresize(img, out_shape)
@@ -178,7 +179,7 @@ def prepare_dataset():
     to_augment = True
     to_crop = True
 
-    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'v1.4')
+    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'v1.6')
 
     out_img_dir = os.path.join(out_dir, 'img')
     print('Making dir ' + out_img_dir)
