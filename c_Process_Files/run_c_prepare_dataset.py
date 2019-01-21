@@ -61,7 +61,7 @@ def process_ith_augmented(class_number, filename, i, imgs, is_val, masks, out_im
 
     noise = np.random.normal(mean_intensity, std_intensity, img.shape)
     segmented = img
-    # segmented = segmented * mask + noise * (1 - mask)
+    segmented = segmented * mask + noise * (1 - mask)
     segmented[segmented < 0] = 0
     segmented[segmented > 1] = 1
 
@@ -127,15 +127,25 @@ def normalize_by_lung_intensities(img, mask):
     return img
 
 
-def process_row(out_img_dir, row, data_dir, to_augment, train_classes, train_paths, val_classes, val_paths,
+def find_file(img_path, data_dirs):
+    for data_dir in data_dirs:
+        full_path = os.path.join(data_dir, img_path)
+
+        if os.path.isfile(full_path):
+            return full_path
+
+    return None
+
+
+def process_row(out_img_dir, row, data_dirs, to_augment, train_classes, train_paths, val_classes, val_paths,
                 out_dir, to_crop):
     img_path = row[1]['path']
     filename = row[1]['filename']
     class_number = row[1]['class_number']
     is_val = row[1]['is_val']
 
-    img_path = os.path.join(data_dir, img_path)
-    mask_path = os.path.join(out_dir, 'img_previews', filename + '-mask.png')
+    img_path = find_file(img_path, data_dirs)
+    mask_path = os.path.join(out_dir, 'img_previews', filename[:-4] + '-mask.png')
 
     if os.path.isfile(img_path) and os.path.isfile(mask_path):
         img0 = io.imread(img_path).astype(float)
@@ -172,14 +182,14 @@ def process_row(out_img_dir, row, data_dir, to_augment, train_classes, train_pat
 
 
 def prepare_dataset():
-    data_dir = 'e:/'
+    data_dirs = ['e:/', 'f:/']
 
     class_of_interest = 'tuberculosis'
     # class_of_interest = 'abnormal_lungs'
     to_augment = True
     to_crop = True
 
-    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'v1.6')
+    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'v2.1')
 
     out_img_dir = os.path.join(out_dir, 'img')
     print('Making dir ' + out_img_dir)
@@ -197,7 +207,7 @@ def prepare_dataset():
         if i % 100 == 0:
             print('%i / %i' % (i, df.shape[0]))
 
-        process_row(out_img_dir, row, data_dir, to_augment, train_classes, train_paths, val_classes, val_paths,
+        process_row(out_img_dir, row, data_dirs, to_augment, train_classes, train_paths, val_classes, val_paths,
                     out_dir, to_crop)
 
     fn = os.path.join(out_dir, 'train.txt')
