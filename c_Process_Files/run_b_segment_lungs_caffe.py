@@ -20,5 +20,6 @@ def segment_lungs_caffe():
 
     os.system(' '.join([path_to_python_with_caffe, path_to_script, path_to_job_model, img_dir]))
 
+
 if __name__ == '__main__':
     segment_lungs_caffe()

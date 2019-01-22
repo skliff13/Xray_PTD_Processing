@@ -19,5 +19,6 @@ def segment_lungs_tf():
 
     os.system(' '.join([path_to_python2_with_tf, path_to_script, img_dir]))
 
+
 if __name__ == '__main__':
     segment_lungs_tf()
