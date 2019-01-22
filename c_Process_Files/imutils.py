@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from random import randint
-from skimage import transform
+from skimage import transform, exposure
 from skimage.morphology import convex_hull_image
+
+from image_gen import ImageDataGenerator
 
 
 def imresize(m, new_shape, order=1, mode='constant'):
@@ -44,6 +46,10 @@ def normalize_by_lung_convex_hull(img, mask):
     return img
 
 
+def normalize_by_histeq(img):
+    return exposure.equalize_hist(img)
+
+
 def to_uint8(img):
     img[img < 0] = 0
     img[img > 1] = 1
@@ -78,5 +84,35 @@ def augment_image(img, mask):
         mask1 = mask * 0
         mask1[ii[0]:ii[1], jj[0]:jj[1]] = imresize(mask, small_shape)
         masks.append(mask1)
+
+    return imgs, masks
+
+
+def augment_image_hard(img, mask, num_copies=20):
+    gen = ImageDataGenerator(rotation_range=10,
+                                   width_shift_range=0.1,
+                                   height_shift_range=0.1,
+                                   rescale=1.,
+                                   zoom_range=0.2,
+                                   fill_mode='nearest',
+                                   cval=0)
+
+    imgs = [img]
+    masks = [mask]
+
+    x = np.expand_dims(img, axis=0)
+    x = np.expand_dims(x, axis=-1)
+    y = np.expand_dims(mask, axis=0)
+    y = np.expand_dims(y, axis=-1)
+
+    i = 0
+    for xx, yy in gen.flow(x, y, batch_size=1):
+        if i == num_copies:
+            break
+        i += 1
+
+        imgs.append(np.squeeze(xx))
+        masks.append(np.squeeze(yy))
+
 
     return imgs, masks

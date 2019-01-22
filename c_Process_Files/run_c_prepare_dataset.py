@@ -3,16 +3,16 @@ import os
 import pathlib
 import numpy as np
 import pandas as pd
-from skimage import io, exposure
+from skimage import io
 from random import randint
 from scipy.ndimage.measurements import label
 
-from imutils import imresize, normalize_by_lung_quantiles, normalize_by_lung_mean_std, normalize_by_lung_convex_hull
-from imutils import augment_image
+from imutils import normalize_by_lung_quantiles, normalize_by_lung_mean_std, normalize_by_lung_convex_hull
+from imutils import imresize, augment_image_hard, normalize_by_histeq
 
 
 def process_ith_augmented(class_number, filename, i, imgs, is_val, masks, out_img_dir, train_classes, train_paths,
-                          val_classes, val_paths):
+                          val_classes, val_paths, to_noise):
     img = imgs[i]
     mask = masks[i]
 
@@ -21,9 +21,12 @@ def process_ith_augmented(class_number, filename, i, imgs, is_val, masks, out_im
     mean_intensity = np.mean(lung_intensities)
     std_intensity = np.std(lung_intensities)
 
-    noise = np.random.normal(mean_intensity, std_intensity, img.shape)
-    segmented = img
-    segmented = segmented * mask + noise * (1 - mask)
+    if to_noise:
+        noise = np.random.normal(mean_intensity, std_intensity, img.shape)
+        segmented = img * mask + noise * (1 - mask)
+    else:
+        segmented = img
+
     segmented[segmented < 0] = 0
     segmented[segmented > 1] = 1
 
@@ -91,7 +94,7 @@ def find_file(img_path, data_dirs):
 
 
 def process_row(out_img_dir, row, data_dirs, to_augment, train_classes, train_paths, val_classes, val_paths,
-                out_dir, to_crop):
+                out_dir, to_crop, to_noise):
     img_path = row[1]['path']
     filename = row[1]['filename']
     class_number = row[1]['class_number']
@@ -116,22 +119,21 @@ def process_row(out_img_dir, row, data_dirs, to_augment, train_classes, train_pa
             else:
                 img = img0
 
-            # img = normalize_by_lung_quantiles(img, mask)
-            img = exposure.equalize_hist(img)
+            img = normalize_by_lung_mean_std(img, mask)
 
             out_shape = (256, 256)
             img = imresize(img, out_shape)
             mask = imresize(mask, out_shape, order=0)
 
             if to_augment and (not is_val):
-                imgs, masks = augment_image(img, mask)
+                imgs, masks = augment_image_hard(img, mask, num_copies=20)
             else:
                 imgs = [img]
                 masks = [mask]
 
             for i in range(len(imgs)):
                 process_ith_augmented(class_number, filename, i, imgs, is_val, masks, out_img_dir, train_classes,
-                                      train_paths, val_classes, val_paths)
+                                      train_paths, val_classes, val_paths, to_noise)
 
 
 def prepare_dataset():
@@ -139,10 +141,12 @@ def prepare_dataset():
 
     class_of_interest = 'tuberculosis'
     # class_of_interest = 'abnormal_lungs'
+
     to_augment = True
     to_crop = True
+    to_noise = False
 
-    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'v2.1')
+    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'v2.2')
 
     out_img_dir = os.path.join(out_dir, 'img')
     print('Making dir ' + out_img_dir)
@@ -161,7 +165,7 @@ def prepare_dataset():
             print('%i / %i' % (i, df.shape[0]))
 
         process_row(out_img_dir, row, data_dirs, to_augment, train_classes, train_paths, val_classes, val_paths,
-                    out_dir, to_crop)
+                    out_dir, to_crop, to_noise)
 
     fn = os.path.join(out_dir, 'train.txt')
     print('Writing training data to ' + fn)
