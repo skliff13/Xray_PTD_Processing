@@ -3,34 +3,7 @@ import sys
 import numpy as np
 from glob import glob
 from keras.models import load_model
-from keras.preprocessing.image import ImageDataGenerator
-from skimage import morphology, io, exposure, img_as_float, transform
-
-
-def load_data(path, im_shape):
-    X = []
-    filepaths = []
-    for filepath in glob(path + '/*.png'):
-        if not filepath.endswith('-mask.png'):
-            img = img_as_float(io.imread(filepath))
-            img = transform.resize(img, im_shape)
-            img = exposure.equalize_hist(img)
-            img = np.expand_dims(img, -1)
-
-            X.append(img)
-            filepaths.append(filepath)
-
-    X = np.array(X)
-    X -= X.mean()
-    X /= X.std()
-
-    print('### Dataset loaded')
-    print('\t{}'.format(path))
-    print('\t{}'.format(X.shape))
-    print('\tX:{:.1f}-{:.1f}\n'.format(X.min(), X.max()))
-    print('\tX.mean = {}, X.std = {}'.format(X.mean(), X.std()))
-
-    return X, filepaths
+from skimage import morphology, io, img_as_float
 
 
 def remove_small_regions(img, size):
@@ -47,27 +20,37 @@ if __name__ == '__main__':
 
     path = sys.argv[1]
 
-    im_shape = (256, 256)
-    X, filepaths = load_data(path, im_shape)
+    sz = 256
+    im_shape = (sz, sz)
 
-    n_test = X.shape[0]
-    inp_shape = X[0].shape
+    model_path = 'trained_model.hdf5'
+    print('Loading model ' + model_path)
+    UNet = load_model(model_path)
 
-    model_name = 'trained_model.hdf5'
-    UNet = load_model(model_name)
+    print('Scanning ' + path + '/*.png')
+    for file_path in glob(path + '/*.png'):
+        if not file_path.endswith('-mask.png'):
+            print('Processing ' + file_path)
 
-    test_gen = ImageDataGenerator(rescale=1.)
+            img = img_as_float(io.imread(file_path))
 
-    for i, X_ in enumerate(X):
-        X_ = np.array([X_])
-        for xx in test_gen.flow(X_, batch_size=1):
-            img = exposure.rescale_intensity(np.squeeze(xx), out_range=(0,1))
-            pred = UNet.predict(xx)[..., 0].reshape(inp_shape[:2])
+            img -= img.mean()
+            img /= img.std()
 
-            pr = pred > 0.5
-            pr = remove_small_regions(pr, 0.02 * np.prod(im_shape))
+            pred = img * 0
 
-            outpath = filepaths[i][:-4] + '-mask.png'
+            batch_size = int(round(img.shape[1] / img.shape[0]))
+            for i in range(batch_size):
+                x = img[:, i * sz:(i + 1) * sz]
+                x = np.expand_dims(x, axis=0)
+                x = np.expand_dims(x, axis=-1)
+
+                pr = UNet.predict(x)[..., 0].reshape(im_shape)
+                pr = pr > 0.5
+                pr = remove_small_regions(pr, 0.02 * np.prod(im_shape))
+
+                pred[:, i * sz:(i + 1) * sz] = pr
+
+            outpath = file_path[:-4] + '-mask.png'
             print('Saving to "%s"' % outpath)
-            io.imsave(outpath, (pr.astype(float) * 255).astype(np.uint8))
-            break
+            io.imsave(outpath, (pred.astype(float) * 255).astype(np.uint8))
