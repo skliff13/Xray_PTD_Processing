@@ -27,9 +27,8 @@ def find_file(img_path, data_dirs):
     return None
 
 
-def process_row(out_img_dir, row, data_dirs, preview_size):
+def try_read_image(row, data_dirs, preview_size):
     img_path = row[1]['path']
-    filename = row[1]['filename']
 
     full_path = find_file(img_path, data_dirs)
 
@@ -43,9 +42,10 @@ def process_row(out_img_dir, row, data_dirs, preview_size):
         img[img > 1] = 1
         img = (img * 255).astype(np.uint8)
 
-        io.imsave(os.path.join(out_img_dir, filename), img)
+        return img
     except:
         print('Failed to read file: "%s"' % img_path)
+        return None
 
 
 def normalize_by_box_quantiles(img):
@@ -57,30 +57,66 @@ def normalize_by_box_quantiles(img):
     return img
 
 
+def save_batch(batch, batch_counter, batch_filenames, out_img_dir, item_counter, preview_size):
+    io.imsave(os.path.join(out_img_dir, 'batch%06i.png' % batch_counter), batch[:, 0:item_counter * preview_size])
+    batch[:, :] = 0
+
+    df = pd.DataFrame.from_dict({'filenames': batch_filenames})
+    df.to_csv(os.path.join(out_img_dir, 'batch%06i.txt' % batch_counter), index=0)
+    batch_filenames.clear()
+
+
 def prepare_previews():
     data_dirs = ['e:/', 'f:/']
 
-    class_of_interest = 'healthy'
-    # class_of_interest = 'tuberculosis'
+    # class_of_interest = 'healthy'
+    class_of_interest = 'tuberculosis'
     # class_of_interest = 'abnormal_lungs'
     preview_size = 256
 
-    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'v1.0')
+    batch_size = 100
 
-    out_img_dir = os.path.join(out_dir, 'img_previews')
+    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'test')
+
+    out_img_dir = os.path.join(out_dir, 'img_256_histeq')
     print('Making dir ' + out_img_dir)
     pathlib.Path(out_img_dir).mkdir(parents=True, exist_ok=True)
 
     study_group_filepath = '../data/study_group_class_' + class_of_interest + '.txt'
-    study_group_filepath = '../data/list_class_' + class_of_interest + '.txt'
+    # study_group_filepath = '../data/list_class_' + class_of_interest + '.txt'
     df = pd.read_csv(study_group_filepath)
+
+    if batch_size > 1:
+        batch = np.zeros((preview_size, preview_size * batch_size), dtype=np.uint8)
+        batch_filenames = []
+        item_counter = 0
+        batch_counter = 0
 
     for row in df.iterrows():
         i = row[0]
         if i % 100 == 0:
             print('%i / %i' % (i, df.shape[0]))
 
-        process_row(out_img_dir, row, data_dirs, preview_size)
+        img = try_read_image(row, data_dirs, preview_size)
+
+        if img is not None:
+            filename = row[1]['filename']
+
+            if batch_size > 1:
+                if item_counter == batch_size:
+                    save_batch(batch, batch_counter, batch_filenames, out_img_dir, item_counter, preview_size)
+                    item_counter = 0
+                    batch_counter += 1
+                else:
+                    start_col = preview_size * item_counter
+                    batch[:, start_col:start_col + preview_size] = img
+                    batch_filenames.append(filename)
+                    item_counter += 1
+            else:
+                io.imsave(os.path.join(out_img_dir, filename), img)
+
+    if item_counter > 0:
+        save_batch(batch, batch_counter, batch_filenames, out_img_dir, item_counter, preview_size)
 
 
 if __name__ == '__main__':
