@@ -3,18 +3,9 @@ import os
 import pathlib
 import numpy as np
 import pandas as pd
-from glob import glob
-from skimage import io, transform, exposure
-from random import randint
+from skimage import io, exposure
 
-
-def imresize(m, new_shape, order=1, mode='constant'):
-    dtype = m.dtype
-    mult = np.max(np.abs(m)) * 2
-    m = m.astype(np.float32) / mult
-    m = transform.resize(m, new_shape, order=order, mode=mode)
-    m = m * mult
-    return m.astype(dtype=dtype)
+from imutils import imresize
 
 
 def find_file(img_path, data_dirs):
