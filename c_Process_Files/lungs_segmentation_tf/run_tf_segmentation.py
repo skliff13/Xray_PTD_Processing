@@ -23,34 +23,38 @@ if __name__ == '__main__':
     sz = 256
     im_shape = (sz, sz)
 
-    model_path = 'trained_model.hdf5'
+    model_path = os.path.join(os.path.split(__file__)[0], 'trained_model.hdf5')
     print('Loading model ' + model_path)
     UNet = load_model(model_path)
 
     print('Scanning ' + path + '/*.png')
     for file_path in glob(path + '/*.png'):
         if not file_path.endswith('-mask.png'):
-            print('Processing ' + file_path)
+            out_path = file_path[:-4] + '-mask.png'
 
-            img = img_as_float(io.imread(file_path))
+            if os.path.isfile(out_path):
+                print('Skipping ' + file_path)
+            else:
+                print('Processing ' + file_path)
 
-            img -= img.mean()
-            img /= img.std()
+                img = img_as_float(io.imread(file_path))
 
-            pred = img * 0
+                img -= img.mean()
+                img /= img.std()
 
-            batch_size = int(round(img.shape[1] / img.shape[0]))
-            for i in range(batch_size):
-                x = img[:, i * sz:(i + 1) * sz]
-                x = np.expand_dims(x, axis=0)
-                x = np.expand_dims(x, axis=-1)
+                pred = img * 0
 
-                pr = UNet.predict(x)[..., 0].reshape(im_shape)
-                pr = pr > 0.5
-                pr = remove_small_regions(pr, 0.02 * np.prod(im_shape))
+                batch_size = int(round(img.shape[1] / img.shape[0]))
+                for i in range(batch_size):
+                    x = img[:, i * sz:(i + 1) * sz]
+                    x = np.expand_dims(x, axis=0)
+                    x = np.expand_dims(x, axis=-1)
 
-                pred[:, i * sz:(i + 1) * sz] = pr
+                    pr = UNet.predict(x)[..., 0].reshape(im_shape)
+                    pr = pr > 0.5
+                    pr = remove_small_regions(pr, 0.02 * np.prod(im_shape))
 
-            outpath = file_path[:-4] + '-mask.png'
-            print('Saving to "%s"' % outpath)
-            io.imsave(outpath, (pred.astype(float) * 255).astype(np.uint8))
+                    pred[:, i * sz:(i + 1) * sz] = pr
+
+                print('Saving to "%s"' % out_path)
+                io.imsave(out_path, (pred.astype(float) * 255).astype(np.uint8))
