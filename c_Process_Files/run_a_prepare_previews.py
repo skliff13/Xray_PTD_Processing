@@ -92,6 +92,7 @@ def prepare_previews():
 
         if img is not None:
             filename = row[1]['filename']
+            path = row[1]['path']
 
             if batch_size > 1:
                 if item_counter == batch_size:
@@ -101,7 +102,7 @@ def prepare_previews():
                 else:
                     start_col = preview_size * item_counter
                     batch[:, start_col:start_col + preview_size] = img
-                    batch_filenames.append(filename)
+                    batch_filenames.append(path)
                     item_counter += 1
             else:
                 io.imsave(os.path.join(out_img_dir, filename), img)
