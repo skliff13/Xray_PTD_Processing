@@ -42,7 +42,7 @@ def load_data(data_dir, data_shape):
     return (x_train_val[0], y_train_val[0]), (x_train_val[1], y_train_val[1])
 
 
-def evaluate(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer):
+def train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer):
     data_shape = (image_sz, image_sz)
     (x_train, y_train), (x_val, y_val) = load_data(data_dir, data_shape)
 
@@ -56,9 +56,9 @@ def evaluate(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, 
 
     files = glob(pattern)
     if not files:
-        print(pattern)
+        print('\n### Running training for ' + pattern + '\n')
 
-        opt = optimizer(lr=learning_rate, decay=1.0e-6)
+        opt = optimizer(lr=learning_rate, decay=0.0e-6)
         model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
         train_gen = ImageDataGenerator(rotation_range=10, width_shift_range=0.1, height_shift_range=0.1, rescale=1.,
@@ -79,40 +79,22 @@ def evaluate(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, 
         model_filename = pattern.replace('*', '_Auc%.3f' % roc_auc)
 
         model.save_weights(model_filename)
-    # else:
-    #     model.load_weights(files[0])
-    #
-    #     predictions = model.predict(x_val, batch_size=batch_size)
-    #
-    #     fpr, tpr, _ = roc_curve(y_val[:, 1].ravel(), predictions[:, 1].ravel())
-    #     roc_auc = auc(fpr, tpr)
-    #     print('AUC = ', roc_auc)
-    #
-    #     lw = 2
-    #     plt.figure(figsize=(6, 6))
-    #     plt.plot(fpr, tpr, lw=lw)
-    #     plt.plot([0, 1], [0, 1], color='green', lw=lw, linestyle='--')
-    #     plt.xlim([0.0, 1.0])
-    #     plt.ylim([0.0, 1.0])
-    #     plt.title(files[0])
-    #     plt.xlabel('False Positive Rate')
-    #     plt.ylabel('True Positive Rate')
-    #     plt.show()
 
 
 def main():
     num_classes = 2
     image_sz = 224
-    model_type = VGG19
+    model_type = InceptionV3
     data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.2'
-    epochs = 30
+    epochs = 300
     batch_size = 32
-    learning_rate = 1e-3
-    optimizer = keras.optimizers.sgd
+    learning_rate = 1e-4
+    optimizer = keras.optimizers.rmsprop
 
-    # for model_type in [VGG16, VGG19, InceptionV3]:
-    for optimizer in [keras.optimizers.sgd, keras.optimizers.adam, keras.optimizers.rmsprop, keras.optimizers.nadam]:
-        evaluate(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer)
+    # for optimizer in [keras.optimizers.sgd, keras.optimizers.adam, keras.optimizers.rmsprop]:
+    for model_type in [VGG16, VGG19, InceptionV3]:
+        for image_sz in [224, 256, 299]:
+            train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer)
 
 
 main()
