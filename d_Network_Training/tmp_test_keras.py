@@ -2,9 +2,13 @@ import os
 import keras
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from glob import glob
+from sklearn.metrics import roc_curve, auc
 from skimage import io, img_as_float, transform
 from keras.applications.inception_v3 import InceptionV3
 from keras.applications.vgg16 import VGG16
+from keras.applications.vgg19 import VGG19
 from keras.preprocessing.image import ImageDataGenerator
 
 
@@ -38,49 +42,77 @@ def load_data(data_dir, data_shape):
     return (x_train_val[0], y_train_val[0]), (x_train_val[1], y_train_val[1])
 
 
-def main():
-    num_classes = 2
-    sz = 224
-    data_shape = (sz, sz)
-    data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.2'
-
+def evaluate(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer):
+    data_shape = (image_sz, image_sz)
     (x_train, y_train), (x_val, y_val) = load_data(data_dir, data_shape)
 
     y_train = keras.utils.to_categorical(y_train, num_classes)
     y_val = keras.utils.to_categorical(y_val, num_classes)
-    print(y_val.shape)
 
-    # model = InceptionV3(input_shape=(256, 256, 1), include_top=False, weights=None)
-    model = VGG16(weights=None, include_top=True, input_shape=(sz, sz, 1), classes=num_classes)
+    model = model_type(weights=None, include_top=True, input_shape=(image_sz, image_sz, 1), classes=num_classes)
 
-    opt = keras.optimizers.rmsprop(lr=0.0001, decay=1e-6)
+    pattern = 'model_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
+    pattern = pattern % (image_sz, model_type.__name__, optimizer.__name__, epochs, learning_rate)
 
-    model.compile(loss='categorical_crossentropy',
-                  optimizer=opt,
-                  metrics=['accuracy'])
+    files = glob(pattern)
+    if not files:
+        print(pattern)
 
-    model.fit(x_train, y_train,
-              batch_size=8,
-              epochs=3,
-              validation_data=(x_val, y_val),
-              shuffle=True)
+        opt = optimizer(lr=learning_rate, decay=1.0e-6)
+        model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
-    # train_gen = ImageDataGenerator(rotation_range=10,
-    #                                width_shift_range=0.1,
-    #                                height_shift_range=0.1,
-    #                                rescale=1.,
-    #                                zoom_range=0.2,
-    #                                fill_mode='nearest',
-    #                                cval=0)
+        train_gen = ImageDataGenerator(rotation_range=10, width_shift_range=0.1, height_shift_range=0.1, rescale=1.,
+                                       zoom_range=0.2, fill_mode='nearest', cval=0)
+
+        val_gen = ImageDataGenerator(rescale=1.)
+
+        model.fit_generator(train_gen.flow(x_train, y_train, batch_size),
+                            steps_per_epoch=(x_train.shape[0] + batch_size - 1) // batch_size,
+                            epochs=epochs,
+                            validation_data=val_gen.flow(x_val, y_val),
+                            validation_steps=(x_val.shape[0] + batch_size - 1) // batch_size)
+
+        predictions = model.predict(x_val, batch_size=batch_size)
+        fpr, tpr, _ = roc_curve(y_val[:, 1].ravel(), predictions[:, 1].ravel())
+        roc_auc = auc(fpr, tpr)
+
+        model_filename = pattern.replace('*', '_Auc%.3f' % roc_auc)
+
+        model.save_weights(model_filename)
+    # else:
+    #     model.load_weights(files[0])
     #
-    # val_gen = ImageDataGenerator(rescale=1.)
+    #     predictions = model.predict(x_val, batch_size=batch_size)
     #
-    # batch_size = 8
-    # model.fit_generator(train_gen.flow(x_train, y_train, batch_size),
-    #                    steps_per_epoch=(x_train.shape[0] + batch_size - 1) // batch_size,
-    #                    epochs=3,
-    #                    validation_data=val_gen.flow(x_val, y_val),
-    #                    validation_steps=(x_val.shape[0] + batch_size - 1) // batch_size)
+    #     fpr, tpr, _ = roc_curve(y_val[:, 1].ravel(), predictions[:, 1].ravel())
+    #     roc_auc = auc(fpr, tpr)
+    #     print('AUC = ', roc_auc)
+    #
+    #     lw = 2
+    #     plt.figure(figsize=(6, 6))
+    #     plt.plot(fpr, tpr, lw=lw)
+    #     plt.plot([0, 1], [0, 1], color='green', lw=lw, linestyle='--')
+    #     plt.xlim([0.0, 1.0])
+    #     plt.ylim([0.0, 1.0])
+    #     plt.title(files[0])
+    #     plt.xlabel('False Positive Rate')
+    #     plt.ylabel('True Positive Rate')
+    #     plt.show()
+
+
+def main():
+    num_classes = 2
+    image_sz = 224
+    model_type = VGG19
+    data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.2'
+    epochs = 30
+    batch_size = 32
+    learning_rate = 1e-3
+    optimizer = keras.optimizers.sgd
+
+    # for model_type in [VGG16, VGG19, InceptionV3]:
+    for optimizer in [keras.optimizers.sgd, keras.optimizers.adam, keras.optimizers.rmsprop, keras.optimizers.nadam]:
+        evaluate(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer)
 
 
 main()
