@@ -11,7 +11,6 @@ from skimage import io, img_as_float, transform
 from keras.applications.inception_v3 import InceptionV3
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
-from keras.preprocessing.image import ImageDataGenerator
 
 
 def load_val_data(data_dir, data_shape):
@@ -89,14 +88,14 @@ def main():
     sum_pred = None
     for model in d:
         if sum_pred is None:
-            sum_pred = d[model]
+            sum_pred = d[model].copy()
         else:
             sum_pred += d[model]
     d['combined'] = sum_pred
 
     lw = 2
     plt.figure(figsize=(6, 6))
-    plt.plot([0, 1], [0, 1], color='green', lw=lw, linestyle='--', label='baseline')
+    plt.plot([0, 1], [0, 1], color='lime', lw=lw, linestyle='--', label='baseline')
 
     for model in d:
         pred = d[model]
@@ -109,7 +108,7 @@ def main():
     plt.title('ROC curves')
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.legend(loc='lower right')
+    plt.legend(loc='lower right', prop={'size': 6})
     plt.show()
 
 
