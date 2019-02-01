@@ -83,14 +83,14 @@ def train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_typ
 
 def parse_args():
     argv = os.sys.argv
-    batch_size = int(argv[2])
-    data_dir = argv[3]
-    epochs = int(argv[4])
-    image_sz = int(argv[5])
-    learning_rate = float(argv[6])
-    model_type = argv[7]
-    num_classes = int(argv[8])
-    optimizer = argv[10]
+    batch_size = int(argv[1])
+    data_dir = argv[2]
+    epochs = int(argv[3])
+    image_sz = int(argv[4])
+    learning_rate = float(argv[5])
+    model_type = argv[6]
+    num_classes = int(argv[7])
+    optimizer = argv[8]
 
     if model_type == 'VGG16':
         model_type = VGG16
