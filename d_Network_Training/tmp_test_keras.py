@@ -10,6 +10,7 @@ from keras.applications.inception_v3 import InceptionV3
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
 from keras.preprocessing.image import ImageDataGenerator
+from inception_v1 import InceptionV1
 
 
 def load_data(data_dir, data_shape):
@@ -92,7 +93,7 @@ def main():
     optimizer = keras.optimizers.rmsprop
 
     # for optimizer in [keras.optimizers.sgd, keras.optimizers.adam, keras.optimizers.rmsprop]:
-    for model_type in [VGG16, VGG19, InceptionV3]:
+    for model_type in [VGG16, VGG19, InceptionV1, InceptionV3]:
         for image_sz in [224, 256, 299]:
             train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer)
 
