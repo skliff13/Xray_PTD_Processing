@@ -2,7 +2,6 @@ import os
 import keras
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from glob import glob
 from sklearn.metrics import roc_curve, auc
 from skimage import io, img_as_float, transform
@@ -82,20 +81,41 @@ def train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_typ
         model.save_weights(model_filename)
 
 
+def parse_args():
+    argv = os.sys.argv
+    batch_size = int(argv[2])
+    data_dir = argv[3]
+    epochs = int(argv[4])
+    image_sz = int(argv[5])
+    learning_rate = float(argv[6])
+    model_type = argv[7]
+    num_classes = int(argv[8])
+    optimizer = argv[10]
+
+    if model_type == 'VGG16':
+        model_type = VGG16
+    elif model_type == 'VGG19':
+        model_type = VGG19
+    elif model_type == 'InceptionV1':
+        model_type = InceptionV1
+    elif model_type == 'InceptionV3':
+        model_type = InceptionV3
+
+    if optimizer == 'RMSprop':
+        optimizer = keras.optimizers.rmsprop
+    elif optimizer == 'SGD':
+        optimizer = keras.optimizers.sgd
+    elif optimizer == 'Adam':
+        optimizer = keras.optimizers.adam
+
+    return batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer
+
+
 def main():
-    num_classes = 2
-    image_sz = 224
-    model_type = InceptionV3
-    data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.2'
-    epochs = 300
-    batch_size = 32
-    learning_rate = 1e-4
-    optimizer = keras.optimizers.rmsprop
+    batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer = parse_args()
 
-    # for optimizer in [keras.optimizers.sgd, keras.optimizers.adam, keras.optimizers.rmsprop]:
-    for model_type in [VGG16, VGG19, InceptionV1, InceptionV3]:
-        for image_sz in [224, 256, 299]:
-            train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer)
+    train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer)
 
 
-main()
+if __name__ == '__main__':
+    main()
