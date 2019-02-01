@@ -5,9 +5,11 @@ import pandas as pd
 from glob import glob
 from sklearn.metrics import roc_curve, auc
 from skimage import io, img_as_float, transform
+from keras_applications.inception_resnet_v2 import InceptionResNetV2
 from keras.applications.inception_v3 import InceptionV3
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
+from keras_applications.resnet50 import ResNet50
 from keras.preprocessing.image import ImageDataGenerator
 from inception_v1 import InceptionV1
 
@@ -100,6 +102,10 @@ def parse_args():
         model_type = InceptionV1
     elif model_type == 'InceptionV3':
         model_type = InceptionV3
+    elif model_type == 'InceptionResNetV2':
+        model_type = InceptionResNetV2
+    elif model_type == 'ResNet50':
+        model_type = ResNet50
 
     if optimizer == 'RMSprop':
         optimizer = keras.optimizers.rmsprop
