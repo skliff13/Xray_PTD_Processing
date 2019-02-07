@@ -37,7 +37,8 @@ def normalize_by_lung_mean_std(img, mask):
 
 
 def normalize_by_lung_convex_hull(img, mask):
-    hull = convex_hull_image(mask)
+    hull = convex_hull_image(imresize(mask, (256, 256)))
+    hull = imresize(hull, mask.shape)
     lung_intensities = img.flatten()
     lung_intensities = lung_intensities[hull.flatten() > 0]
     q1 = np.percentile(lung_intensities, 1)

@@ -13,6 +13,7 @@ __pycache__/
 data/*.sqlite
 data/*.sqlite-journal
 data/*.bak
+data/*.png
 data/SQLiteSpy.*
 data/files_info_all_together.txt
 data/xray_test/
