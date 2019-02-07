@@ -23,3 +23,4 @@ data/study_group_*.txt
 data/list_*.txt
 c_Process_Files/lungs_segmentation_caffe/test_*
 *.cmd
+*.hdf5
