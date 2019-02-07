@@ -39,7 +39,7 @@ def load_val_data(data_dir, data_shape):
 
     print('val_data:', x_val[0].shape, y_val[0].shape)
 
-    return (x_val[0], y_val[0])
+    return x_val[0], y_val[0]
 
 
 def evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer):
@@ -72,14 +72,14 @@ def main():
     image_sz = 224
     model_type = InceptionV3
     data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.2'
-    epochs = 300
+    epochs = 1000
     batch_size = 32
     learning_rate = 1e-4
     optimizer = keras.optimizers.rmsprop
 
     d = {}
     for model_type in [InceptionV3]:
-        for image_sz in [256, 299]:
+        for image_sz in [224, 256, 299]:
             pred, model, y_val = evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate,
                                          model_type, num_classes, optimizer)
             if pred is not None:

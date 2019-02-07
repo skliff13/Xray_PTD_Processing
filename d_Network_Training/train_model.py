@@ -68,7 +68,7 @@ def train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_typ
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
     train_gen = ModifiedDataGenerator(rotation_range=10, width_shift_range=0.1, height_shift_range=0.1, rescale=1.,
-                                   zoom_range=0.2, fill_mode='nearest', cval=0, crop_to=crop_to)
+                                      zoom_range=0.2, fill_mode='nearest', cval=0, crop_to=crop_to)
 
     val_gen = ModifiedDataGenerator(rescale=1., crop_to=crop_to)
 
