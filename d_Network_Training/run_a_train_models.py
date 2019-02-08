@@ -4,20 +4,20 @@ from glob import glob
 
 def main():
     num_classes = 2
-    # image_sz = 224
+    image_sz = 256
     # model_type = 'InceptionV3'
     data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.2'
-    epochs = 3
+    epochs = 300
     batch_size = 32
-    learning_rate = 1e-4
-    optimizer = 'RMSprop'
+    learning_rate = 1e-5
+    # optimizer = 'RMSprop'
     crop_to = 224
 
-    # for optimizer in ['SGD', 'Adam', 'RMSprop']:
+    for optimizer in ['Adam']:
     # for model_type in ['VGG16', 'VGG19', 'InceptionV3', 'InceptionV1', 'InceptionResNetV2', 'ResNet50']:
-    for model_type in ['InceptionV1']:
-        for image_sz in [256]:
-            pattern = 'model_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
+    # for image_sz in [256]:
+        for model_type in ['InceptionV1']:
+            pattern = 'models/model_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
             pattern = pattern % (image_sz, model_type, optimizer, epochs, learning_rate)
 
             files = glob(pattern)

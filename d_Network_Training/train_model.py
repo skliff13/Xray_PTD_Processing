@@ -59,7 +59,7 @@ def train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_typ
 
     model = model_type(weights=None, include_top=True, input_shape=(final_image_sz, final_image_sz, 1), classes=num_classes)
 
-    pattern = 'model_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
+    pattern = 'models/model_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
     pattern = pattern % (image_sz, model_type.__name__, optimizer.__name__, epochs, learning_rate)
 
     print('\n### Running training for ' + pattern + '\n')
@@ -72,9 +72,13 @@ def train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_typ
 
     val_gen = ModifiedDataGenerator(rescale=1., crop_to=crop_to)
 
+    tensor_board = keras.callbacks.TensorBoard(log_dir=pattern.replace('models/', 'graphs/').replace('*.hdf5', ''),
+                                               histogram_freq=0, write_graph=True, write_images=True)
+
     model.fit_generator(train_gen.flow(x_train, y_train, batch_size),
                         steps_per_epoch=(x_train.shape[0] + batch_size - 1) // batch_size,
                         epochs=epochs,
+                        callbacks=[tensor_board],
                         validation_data=val_gen.flow(x_val, y_val),
                         validation_steps=(x_val.shape[0] + batch_size - 1) // batch_size)
 
