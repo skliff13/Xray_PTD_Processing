@@ -130,7 +130,7 @@ def process_row(out_img_dir, row, data_dirs, to_augment, to_crop, to_noise, batc
 def prepare_dataset():
     data_dirs = ['e:/', 'f:/']
 
-    class_of_interest = 'healthy'
+    class_of_interest = 'abnormal_lungs'
 
     to_augment = False
     to_crop = False

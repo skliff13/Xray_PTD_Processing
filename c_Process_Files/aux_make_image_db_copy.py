@@ -12,7 +12,7 @@ def copy_all(src_dir, dst_dir, img_size):
         item_path = os.path.join(src_dir, item)
         dst_path = os.path.join(dst_dir, item)
 
-        if os.path.isfile(item_path):
+        if os.path.isfile(item_path) and (not os.path.isfile(dst_path)):
             try:
                 if item_path.endswith('.png'):
                     im = imageio.imread(item_path)
