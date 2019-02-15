@@ -51,12 +51,14 @@ class BatchReader:
         self.item_of = {}
         df = pd.read_csv(batch_txt_path)
         for i, row in df.iterrows():
-            self.item_of[row['filenames']] = i
+            path = row['filenames']
+            filename = os.path.split(path)[1]
+            self.item_of[filename] = i
 
         self.loaded_batch_idx = batch_idx
 
     def read_list_to_dict(self):
-        print('Reading batches list to dictionary ...')
+        print('Reading batches list to dictionary from ' + self.list_path)
         batch_of = {}
         df = pd.read_csv(self.list_path)
         for i, row in df.iterrows():
@@ -72,7 +74,7 @@ class BatchReader:
         filenames = []
         batches = []
 
-        paths = glob(os.path.join(self.work_dir, '/batch*.txt'))
+        paths = glob(os.path.join(self.work_dir, 'batch*.txt'))
 
         for path in paths:
             if path.endswith('00.txt'):
@@ -83,6 +85,7 @@ class BatchReader:
             df = pd.read_csv(path)
             for row in df.iterrows():
                 filename = row[1]['filenames']
+                filename = os.path.split(filename)[1]
 
                 filenames.append(filename)
                 batches.append(batch_idx)

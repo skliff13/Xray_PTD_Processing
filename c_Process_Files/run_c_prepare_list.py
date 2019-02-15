@@ -33,6 +33,7 @@ def process_ith_augmented(filename, i, imgs, masks, out_img_dir, to_noise, age, 
 
     out_img_filename = '%02i%s_%s_aug%03i.png' % (age, gender, filename, i)
     out_img_path = os.path.join(out_img_dir, out_img_filename)
+    print(out_img_path)
     io.imsave(out_img_path, (segmented * 255).astype(np.uint8))
 
 
@@ -137,7 +138,7 @@ def prepare_dataset():
     to_noise = False
     out_size = 512
 
-    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'v1.0')
+    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'list')
 
     out_img_dir = os.path.join(out_dir, 'img')
     print('Making dir ' + out_img_dir)
@@ -145,9 +146,10 @@ def prepare_dataset():
 
     batch_reader = BatchReader(os.path.join(out_dir, 'img_previews'))
 
-    study_group_filepath = '../data/list_class_' + class_of_interest + '.txt'
-    df = pd.read_csv(study_group_filepath)
+    list_filepath = '../data/list_class_' + class_of_interest + '.txt'
+    df = pd.read_csv(list_filepath)
 
+    print('Processing list ' + list_filepath)
     for row in df.iterrows():
         i = row[0]
         if i % 100 == 0:
