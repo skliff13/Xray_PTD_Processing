@@ -6,14 +6,14 @@ def main():
     num_classes = 2
     image_sz = 256
     # model_type = 'InceptionV3'
-    data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.2'
-    epochs = 300
+    data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3_full'
+    epochs = 10
     batch_size = 32
-    learning_rate = 1e-5
+    learning_rate = 1e-4
     # optimizer = 'RMSprop'
     crop_to = 224
 
-    for optimizer in ['Adam']:
+    for optimizer in ['SGD', 'RMSprop', 'Adam']:
     # for model_type in ['VGG16', 'VGG19', 'InceptionV3', 'InceptionV1', 'InceptionResNetV2', 'ResNet50']:
     # for image_sz in [256]:
         for model_type in ['InceptionV1']:
@@ -22,7 +22,7 @@ def main():
 
             files = glob(pattern)
             if not files:
-                args = ['python3', 'train_model.py', str(batch_size), data_dir, str(epochs), str(image_sz),
+                args = ['CUDA_VISIBLE_DEVICES=1', 'python3', 'train_model.py', str(batch_size), data_dir, str(epochs), str(image_sz),
                         str(learning_rate), model_type, str(num_classes), optimizer, str(crop_to)]
                 cmd = ' '.join(args)
                 print(cmd)

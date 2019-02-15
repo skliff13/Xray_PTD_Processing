@@ -27,9 +27,12 @@ def load_data(data_dir, data_shape):
         df = pd.read_csv(os.path.join(data_dir, filename), sep=' ', header=None)
 
         for i, row in df.iterrows():
+            if i % 100 == 0:
+                print('%i / %i' % (i, df.shape[0]))
+
             path = os.path.join(data_dir, row[0])
             if os.path.isfile(path):
-                img = img_as_float(io.imread(path))
+                img = img_as_float(io.imread(path)).astype(np.float32)
                 img = transform.resize(img, data_shape)
                 img -= 0.5
 
@@ -60,12 +63,11 @@ def train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_typ
     model = model_type(weights=None, include_top=True, input_shape=(final_image_sz, final_image_sz, 1), classes=num_classes)
 
     pattern = 'models/model_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
-    pattern = pattern % (image_sz, model_type.__name__, optimizer.__name__, epochs, learning_rate)
+    pattern = pattern % (image_sz, model_type.__name__, optimizer.__class__.__name__, epochs, learning_rate)
 
     print('\n### Running training for ' + pattern + '\n')
 
-    opt = optimizer(lr=learning_rate, decay=0.0e-6)
-    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
     train_gen = ModifiedDataGenerator(rotation_range=10, width_shift_range=0.1, height_shift_range=0.1, rescale=1.,
                                       zoom_range=0.2, fill_mode='nearest', cval=0, crop_to=crop_to)
@@ -75,10 +77,22 @@ def train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_typ
     tensor_board = keras.callbacks.TensorBoard(log_dir=pattern.replace('models/', 'graphs/').replace('*.hdf5', ''),
                                                histogram_freq=0, write_graph=True, write_images=True)
 
+    callbacks = [tensor_board]
+
+    if optimizer.__class__.__name__ == 'SGD':
+        def schedule(epoch):
+            if epoch < epochs // 3:
+                return learning_rate
+            if epoch < 2 * epochs // 3:
+                return learning_rate * 0.1
+            return learning_rate * 0.01
+
+        callbacks.append(keras.callbacks.LearningRateScheduler(schedule=schedule))
+
     model.fit_generator(train_gen.flow(x_train, y_train, batch_size),
                         steps_per_epoch=(x_train.shape[0] + batch_size - 1) // batch_size,
                         epochs=epochs,
-                        callbacks=[tensor_board],
+                        callbacks=callbacks,
                         validation_data=val_gen.flow(x_val, y_val),
                         validation_steps=(x_val.shape[0] + batch_size - 1) // batch_size)
 
@@ -121,11 +135,11 @@ def parse_args():
         model_type = ResNet50
 
     if optimizer == 'RMSprop':
-        optimizer = keras.optimizers.rmsprop
+        optimizer = keras.optimizers.rmsprop(lr=learning_rate, decay=0.)
     elif optimizer == 'SGD':
-        optimizer = keras.optimizers.sgd
+        optimizer = keras.optimizers.sgd(lr=learning_rate, decay=0., nesterov=True, momentum=0.9)
     elif optimizer == 'Adam':
-        optimizer = keras.optimizers.adam
+        optimizer = keras.optimizers.adam(lr=learning_rate, decay=0.)
 
     return batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer, crop_to
 
@@ -137,6 +151,6 @@ def main():
 
 
 if __name__ == '__main__':
-    # os.sys.argv = 'train_model.py 32 /home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.2 400 256 0.0001 InceptionV1 2 SGD 224'.split(' ')
+    os.sys.argv = 'train_model.py 32 /home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3 1 256 0.0001 InceptionV1 2 SGD 224'.split(' ')
 
     main()
