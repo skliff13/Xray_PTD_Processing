@@ -169,9 +169,6 @@ def prepare_dataset():
         if i % 100 == 0:
             print('%i / %i' % (i, df.shape[0]))
 
-        if i == 20:
-            break
-
         process_row(out_img_dir, row, data_dirs, to_augment, train_classes, train_paths, val_classes, val_paths,
                     batch_reader, to_crop, to_noise, out_size)
 
