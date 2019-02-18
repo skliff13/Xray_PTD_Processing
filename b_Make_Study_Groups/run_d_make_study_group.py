@@ -18,7 +18,10 @@ def process_db_file(db_path, class_columns):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
-    query = 'SELECT pngfilepath, %s, age, is_male FROM protocol2' % class_columns[1]
+    query = 'SELECT pngfilepath, %s, age, is_male, class_healthy, ' % class_columns[1]
+    query += ' class_pneumosclerosis, class_emphysema, class_fibrosis, class_pneumonia, '
+    query += ' class_focal_shadows, class_bronchitis, class_tuberculosis '
+    query += ' FROM protocol2 '
     query += ' WHERE (xray_validated OR xray_validated IS NULL) AND age >= 10 AND age <= 69'
     query += ' AND (%s OR %s) ' % (class_columns[0], class_columns[1])
     return print_and_exec(c, query)
@@ -40,6 +43,15 @@ def make_study_group():
     card_numbers = []
     ages = []
     is_males = []
+    healthy = []
+    pneumosclerosis = []
+    emphysema = []
+    fibrosis = []
+    pneumonia = []
+    focal_shadows = []
+    bronchitis = []
+    tuberculosis = []
+
     for db_path in db_paths:
         records = process_db_file(db_path, class_columns)
 
@@ -52,6 +64,15 @@ def make_study_group():
             card_numbers.append(int(filename.split('_')[0]))
             ages.append(record[2])
             is_males.append(record[3])
+
+            healthy.append(record[4])
+            pneumosclerosis.append(record[5])
+            emphysema.append(record[6])
+            fibrosis.append(record[7])
+            pneumonia.append(record[8])
+            focal_shadows.append(record[9])
+            bronchitis.append(record[10])
+            tuberculosis.append(record[11])
 
     unique_card_numbers = list(set(card_numbers))
     shuffle(unique_card_numbers)
@@ -85,7 +106,10 @@ def make_study_group():
     print('Training: %i vs. %i,    Validation: %i vs. %i' % (train_controls, train_class, val_controls, val_class))
 
     df = pd.DataFrame(data={'path': paths, 'filename': filenames, 'age': ages, 'is_male': is_males,
-                            'class_number': class_numbers, 'is_val': is_vals})
+                            'class_number': class_numbers, 'is_val': is_vals,'healthy': healthy,
+                            'pneumosclerosis': pneumosclerosis, 'emphysema': emphysema, 'fibrosis': fibrosis,
+                            'pneumonia': pneumonia, 'focal_shadows': focal_shadows,
+                            'bronchitis': bronchitis, 'tuberculosis': tuberculosis})
     out_filepath = '../data/study_group_%s_.txt' % class_of_interest
     print('Saving data to "%s"' % out_filepath)
     df.to_csv(out_filepath, index=False)

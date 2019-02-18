@@ -25,7 +25,7 @@ def process_db_file(db_path):
     for row in result:
         column_dtypes[row[1].lower()] = row[2]
 
-    classes_to_combine = ['pneumosclerosis', 'emphysema', 'fibrosis', 'calcinosis', 'pneumonia', 'focal_shadows',
+    classes_to_combine = ['pneumosclerosis', 'emphysema', 'fibrosis', 'pneumonia', 'focal_shadows',
                           'bronchitis', 'tuberculosis']
     print('\nClasses to combine: ' + ', '.join(classes_to_combine))
 

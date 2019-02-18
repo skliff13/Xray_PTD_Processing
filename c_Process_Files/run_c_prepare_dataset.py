@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import pathlib
+import json
 import numpy as np
 import pandas as pd
 from skimage import io
@@ -9,6 +10,7 @@ from scipy.ndimage.measurements import label
 
 from imutils import normalize_by_lung_quantiles, normalize_by_lung_mean_std, normalize_by_lung_convex_hull
 from imutils import imresize, augment_image_hard, normalize_by_histeq
+from batch_reader import BatchReader
 
 
 def process_ith_augmented(class_number, filename, i, imgs, is_val, masks, out_img_dir, train_classes, train_paths,
@@ -94,18 +96,17 @@ def find_file(img_path, data_dirs):
 
 
 def process_row(out_img_dir, row, data_dirs, to_augment, train_classes, train_paths, val_classes, val_paths,
-                out_dir, to_crop, to_noise):
+                batch_reader, to_crop, to_noise, out_size):
     img_path = row[1]['path']
     filename = row[1]['filename']
     class_number = row[1]['class_number']
     is_val = row[1]['is_val']
 
     img_path = find_file(img_path, data_dirs)
-    mask_path = os.path.join(out_dir, 'img_previews', filename[:-4] + '-mask.png')
+    mask0 = batch_reader.get_mask_of(filename)
 
-    if os.path.isfile(img_path) and os.path.isfile(mask_path):
+    if os.path.isfile(img_path) and mask0 is not None:
         img0 = io.imread(img_path).astype(float)
-        mask0 = io.imread(mask_path).astype(float) / 255.
 
         mask = process_and_validate_mask(mask0)
 
@@ -121,7 +122,7 @@ def process_row(out_img_dir, row, data_dirs, to_augment, train_classes, train_pa
 
             img = normalize_by_lung_mean_std(img, mask)
 
-            out_shape = (256, 256)
+            out_shape = (out_size, out_size)
             img = imresize(img, out_shape)
             mask = imresize(mask, out_shape, order=0)
 
@@ -139,18 +140,21 @@ def process_row(out_img_dir, row, data_dirs, to_augment, train_classes, train_pa
 def prepare_dataset():
     data_dirs = ['e:/', 'f:/']
 
-    class_of_interest = 'tuberculosis'
-    # class_of_interest = 'abnormal_lungs'
+    # class_of_interest = 'tuberculosis'
+    class_of_interest = 'abnormal_lungs'
 
-    to_augment = True
+    to_augment = False
     to_crop = True
     to_noise = False
+    out_size = 512
 
-    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'v2.2')
+    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'v2.0')
 
     out_img_dir = os.path.join(out_dir, 'img')
     print('Making dir ' + out_img_dir)
     pathlib.Path(out_img_dir).mkdir(parents=True, exist_ok=True)
+
+    batch_reader = BatchReader(os.path.join(out_dir, 'img_previews'))
 
     study_group_filepath = '../data/study_group_class_' + class_of_interest + '.txt'
     df = pd.read_csv(study_group_filepath)
@@ -159,13 +163,23 @@ def prepare_dataset():
     train_classes = []
     val_paths = []
     val_classes = []
+    print('Iterating rows of ' + study_group_filepath)
     for row in df.iterrows():
         i = row[0]
         if i % 100 == 0:
             print('%i / %i' % (i, df.shape[0]))
 
+        if i == 20:
+            break
+
         process_row(out_img_dir, row, data_dirs, to_augment, train_classes, train_paths, val_classes, val_paths,
-                    out_dir, to_crop, to_noise)
+                    batch_reader, to_crop, to_noise, out_size)
+
+    config_file_path = os.path.join(out_dir, 'config.json')
+    data = {'to_augment': to_augment, 'to_crop': to_crop, 'to_noise': to_noise, 'out_size': out_size,
+            'class_of_interest': class_of_interest, 'train_cases': len(train_classes), 'val_cases': len(val_classes)}
+    with open(config_file_path, 'wt') as f:
+        json.dump(data, f)
 
     fn = os.path.join(out_dir, 'train.txt')
     print('Writing training data to ' + fn)

@@ -67,14 +67,14 @@ def prepare_previews():
 
     batch_size = 100
 
-    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'list')
+    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'v2.0')
 
-    out_img_dir = os.path.join(out_dir, 'img_256_histeq')
+    out_img_dir = os.path.join(out_dir, 'img_previews')
     print('Making dir ' + out_img_dir)
     pathlib.Path(out_img_dir).mkdir(parents=True, exist_ok=True)
 
-    # study_group_filepath = '../data/study_group_class_' + class_of_interest + '.txt'
-    study_group_filepath = '../data/list_class_' + class_of_interest + '.txt'
+    study_group_filepath = '../data/study_group_class_' + class_of_interest + '.txt'
+    # study_group_filepath = '../data/list_class_' + class_of_interest + '.txt'
     df = pd.read_csv(study_group_filepath)
 
     if batch_size > 1:
