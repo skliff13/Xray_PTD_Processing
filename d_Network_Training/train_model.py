@@ -2,7 +2,7 @@ import os
 import keras
 import numpy as np
 import pandas as pd
-from glob import glob
+from random import shuffle
 from sklearn.metrics import roc_curve, auc
 from skimage import io, img_as_float, transform
 from keras_applications.inception_resnet_v2 import InceptionResNetV2
@@ -15,7 +15,7 @@ from inception_v1 import InceptionV1
 from data_gen import ModifiedDataGenerator
 
 
-def load_data(data_dir, data_shape):
+def load_data(data_dir, data_shape, shuffle_lines=True):
     print('Loading data from ' + data_dir)
 
     x_train_val = []
@@ -26,18 +26,22 @@ def load_data(data_dir, data_shape):
 
         df = pd.read_csv(os.path.join(data_dir, filename), sep=' ', header=None)
 
-        for i, row in df.iterrows():
+        idx = list(range(df.shape[0]))
+        if shuffle_lines:
+            shuffle(idx)
+
+        for i, row_idx in enumerate(idx):
             if i % 100 == 0:
                 print('%i / %i' % (i, df.shape[0]))
 
-            path = os.path.join(data_dir, row[0])
+            path = os.path.join(data_dir, df[0][row_idx])
             if os.path.isfile(path):
                 img = img_as_float(io.imread(path)).astype(np.float32)
                 img = transform.resize(img, data_shape)
                 img -= 0.5
 
                 x.append(np.expand_dims(img, -1))
-                y.append(np.array([row[1]]))
+                y.append(np.array([df[1][row_idx]]))
 
         x_train_val.append(np.array(x))
         y_train_val.append(np.array(y))
@@ -151,6 +155,6 @@ def main():
 
 
 if __name__ == '__main__':
-    os.sys.argv = 'train_model.py 32 /home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3 1 256 0.0001 InceptionV1 2 SGD 224'.split(' ')
+    # os.sys.argv = 'train_model.py 32 /home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3 1 256 0.0001 InceptionV1 2 SGD 224'.split(' ')
 
     main()
