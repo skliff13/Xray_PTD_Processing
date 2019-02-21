@@ -2,6 +2,7 @@ import os
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_SUB_ID'
 os.environ['CUDA_VISIBLE_DEVICES'] = ''
 import keras
+import json
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -49,7 +50,7 @@ def evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_
 
     model = model_type(weights=None, include_top=True, input_shape=(image_sz, image_sz, 1), classes=num_classes)
 
-    pattern = 'model_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
+    pattern = 'models/_old/model_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
     pattern = pattern % (image_sz, model_type.__name__, optimizer.__name__, epochs, learning_rate)
 
     files = glob(pattern)
@@ -79,29 +80,29 @@ def main():
 
     d = {}
     for model_type in [InceptionV3]:
-        for image_sz in [224, 256, 299]:
-            pred, model, y_val = evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate,
+        for image_sz in [224]:
+            pred, model_file, y_val = evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate,
                                          model_type, num_classes, optimizer)
             if pred is not None:
-                d[model] = pred
+                d[model_file] = pred
 
     sum_pred = None
-    for model in d:
+    for model_file in d:
         if sum_pred is None:
-            sum_pred = d[model].copy()
+            sum_pred = d[model_file].copy()
         else:
-            sum_pred += d[model]
+            sum_pred += d[model_file]
     d['combined'] = sum_pred
 
     lw = 2
     plt.figure(figsize=(6, 6))
     plt.plot([0, 1], [0, 1], color='lime', lw=lw, linestyle='--', label='baseline')
 
-    for model in d:
-        pred = d[model]
+    for model_file in d:
+        pred = d[model_file]
         fpr, tpr, _ = roc_curve(y_val[:, 1].ravel(), pred[:, 1].ravel())
         roc_auc = auc(fpr, tpr)
-        plt.plot(fpr, tpr, lw=lw, label=('%s (AUC %0.3f)' % (model, roc_auc)))
+        plt.plot(fpr, tpr, lw=lw, label=('%s (AUC %0.3f)' % (model_file, roc_auc)))
 
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.0])
@@ -112,4 +113,5 @@ def main():
     plt.show()
 
 
-main()
+if __name__ == '__main__':
+    main()

@@ -1,4 +1,5 @@
 import os
+import json
 import keras
 import numpy as np
 import pandas as pd
@@ -15,6 +16,21 @@ from inception_v1 import InceptionV1
 from data_gen import ModifiedDataGenerator
 
 
+def process_item(data_dir, data_shape, item_class, item_path, x, y, i, df):
+    if i % 1000 == 0:
+        print('%i / %i' % (i, df.shape[0]))
+
+    path = os.path.join(data_dir, item_path)
+    if os.path.isfile(path):
+        img = img_as_float(io.imread(path))
+        if img.shape != data_shape:
+            img = transform.resize(img, data_shape)
+        img = (img * 255).astype(np.uint8)
+
+        x.append(np.expand_dims(img, -1))
+        y.append(np.array([item_class]))
+
+
 def load_data(data_dir, data_shape, shuffle_lines=True):
     print('Loading data from ' + data_dir)
 
@@ -28,22 +44,22 @@ def load_data(data_dir, data_shape, shuffle_lines=True):
 
         idx = list(range(df.shape[0]))
         if shuffle_lines:
+            print('Shuffling lines')
             shuffle(idx)
 
-        for i, row_idx in enumerate(idx):
-            if i % 100 == 0:
-                print('%i / %i' % (i, df.shape[0]))
+            for i, row_idx in enumerate(idx):
+                item_path = df[0][row_idx]
+                item_class = df[1][row_idx]
+                process_item(data_dir, data_shape, item_class, item_path, x, y, i, df)
+        else:
+            for i, row in df.iterrows():
+                item_path = row[0]
+                item_class = row[1]
+                process_item(data_dir, data_shape, item_class, item_path, x, y, i, df)
 
-            path = os.path.join(data_dir, df[0][row_idx])
-            if os.path.isfile(path):
-                img = img_as_float(io.imread(path)).astype(np.float32)
-                img = transform.resize(img, data_shape)
-                img -= 0.5
-
-                x.append(np.expand_dims(img, -1))
-                y.append(np.array([df[1][row_idx]]))
-
-        x_train_val.append(np.array(x))
+        x = np.array(x).astype(np.float32) / 255.
+        x -= 0.5
+        x_train_val.append(x)
         y_train_val.append(np.array(y))
 
     print('train_data:', x_train_val[0].shape, y_train_val[0].shape)
@@ -64,10 +80,17 @@ def train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_typ
     y_train = keras.utils.to_categorical(y_train, num_classes)
     y_val = keras.utils.to_categorical(y_val, num_classes)
 
-    model = model_type(weights=None, include_top=True, input_shape=(final_image_sz, final_image_sz, 1), classes=num_classes)
+    model = model_type(weights=None, include_top=True, input_shape=(final_image_sz, final_image_sz, 1),
+                       classes=num_classes)
 
-    pattern = 'models/model_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
-    pattern = pattern % (image_sz, model_type.__name__, optimizer.__class__.__name__, epochs, learning_rate)
+    json_path = os.path.join(data_dir, 'config.json')
+    print('Reading config from ' + json_path)
+    with open(json_path, 'r') as f:
+        config = json.load(f)
+
+    pattern = 'models/%s_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
+    pattern = pattern % (config['class_of_interest'], image_sz, model_type.__name__, optimizer.__class__.__name__,
+                         epochs, learning_rate)
 
     print('\n### Running training for ' + pattern + '\n')
 
@@ -139,11 +162,11 @@ def parse_args():
         model_type = ResNet50
 
     if optimizer == 'RMSprop':
-        optimizer = keras.optimizers.rmsprop(lr=learning_rate, decay=0.)
+        optimizer = keras.optimizers.rmsprop(lr=learning_rate, decay=1.e-6)
     elif optimizer == 'SGD':
-        optimizer = keras.optimizers.sgd(lr=learning_rate, decay=0., nesterov=True, momentum=0.9)
+        optimizer = keras.optimizers.sgd(lr=learning_rate, decay=1.e-6, nesterov=True, momentum=0.9)
     elif optimizer == 'Adam':
-        optimizer = keras.optimizers.adam(lr=learning_rate, decay=0.)
+        optimizer = keras.optimizers.adam(lr=learning_rate, decay=1.e-6)
 
     return batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer, crop_to
 
@@ -155,6 +178,6 @@ def main():
 
 
 if __name__ == '__main__':
-    # os.sys.argv = 'train_model.py 32 /home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3 1 256 0.0001 InceptionV1 2 SGD 224'.split(' ')
+    # os.sys.argv = 'train_model.py 32 /home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3 300 299 0.0001 InceptionV3 2 RMSprop -1'.split(' ')
 
     main()
