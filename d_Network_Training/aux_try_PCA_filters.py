@@ -1,6 +1,6 @@
 import os
-os.environ['CUDA_DEVICE_ORDER'] = 'PCI_SUB_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = ''
+if __name__ == '__main__':
+    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import keras
 import numpy as np
 import pandas as pd
@@ -132,13 +132,14 @@ def analyze_layer(weights, name):
 
 
 def main():
-    # model_filename = 'model_Sz256_VGG16_RMSprop_Ep300_Lr1.0e-04_Auc0.818.hdf5'
-    model_filename = 'model_Sz224_VGG19_RMSprop_Ep300_Lr1.0e-04_Auc0.793.hdf5'
+    # model_filename = 'models/_old/model_Sz256_VGG16_RMSprop_Ep300_Lr1.0e-04_Auc0.818.hdf5'
+    # model_filename = 'models/_old/model_Sz224_VGG19_RMSprop_Ep300_Lr1.0e-04_Auc0.793.hdf5'
+    model_filename = 'models/_old/model_Sz299_InceptionV3_RMSprop_Ep300_Lr1.0e-04_Auc0.864.hdf5'
     num_classes = 2
 
-    parts = model_filename.split('_')
+    parts = os.path.split(model_filename)[1].split('_')
     image_sz = int(parts[1][2:])
-    model_type = model_filename.split('_')[2]
+    model_type = os.path.split(model_filename)[1].split('_')[2]
 
     model_type = parse_model_type(model_type)
     model = model_type(weights=None, include_top=True, input_shape=(image_sz, image_sz, 1), classes=num_classes)
@@ -153,10 +154,10 @@ def main():
         for layer in model.layers:
             weights = layer.get_weights()
 
-            print(layer.name)
+            print(layer.name, layer.output_shape)
 
-            if len(weights) == 2 and len(weights[0].shape) == 4:
-                analyze_layer(weights, layer.name)
+            # if len(weights) == 2 and len(weights[0].shape) == 4:
+            #     analyze_layer(weights, layer.name)
 
     plt.legend()
     plt.show()

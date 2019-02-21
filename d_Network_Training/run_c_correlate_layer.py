@@ -1,6 +1,6 @@
 import os
-os.environ['CUDA_DEVICE_ORDER'] = 'PCI_SUB_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = ''
+if __name__ == '__main__':
+    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import keras
 from keras.models import Model
 from sklearn.linear_model import LinearRegression
@@ -27,7 +27,6 @@ def save_layer_coefs(batch_size, data_dir, image_sz, model_type, num_classes, mo
 
     fpr, tpr, _ = roc_curve(y_val[:, 0].ravel(), predictions[:, 1].ravel())
     print('Predictions AUC: %f' % auc(fpr, tpr))
-    exit(13)
 
     print('Evaluating activations')
     layer_model = Model(inputs=model.input, outputs=model.get_layer(layer_name).output)
@@ -38,7 +37,7 @@ def save_layer_coefs(batch_size, data_dir, image_sz, model_type, num_classes, mo
     coefs = np.append(reg.coef_, [reg.intercept_])
 
     act_pred = np.matmul(averages, coefs[:-1])
-    fpr, tpr, _ = roc_curve(y_val[:, 1].ravel(), act_pred.ravel())
+    fpr, tpr, _ = roc_curve(y_val[:, 0].ravel(), act_pred.ravel())
     print('Linear model with activations AUC: %f' % auc(fpr, tpr))
 
     out_path = model_path[:-5] + '_' + layer_name + '_coefs.txt'
@@ -47,13 +46,14 @@ def save_layer_coefs(batch_size, data_dir, image_sz, model_type, num_classes, mo
 
 def main():
     num_classes = 2
-    image_sz = 256
-    model_type = VGG16
+    image_sz = 299
+    model_type = InceptionV3
     data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3'
-    batch_size = 32
-    # model_path = 'models/_old/model_Sz299_InceptionV3_RMSprop_Ep300_Lr1.0e-04_Auc0.864.hdf5'
-    model_path = 'models/_old/model_Sz256_VGG16_RMSprop_Ep300_Lr1.0e-04_Auc0.818.hdf5'
-    layer_name = 'block5_conv3'
+    batch_size = 16
+    model_path = 'models/_old/model_Sz299_InceptionV3_RMSprop_Ep300_Lr1.0e-04_Auc0.864.hdf5'
+    layer_name = 'mixed10'
+    # model_path = 'models/_old/model_Sz256_VGG16_RMSprop_Ep300_Lr1.0e-04_Auc0.818.hdf5'
+    # layer_name = 'block5_conv3'
 
     save_layer_coefs(batch_size, data_dir, image_sz, model_type, num_classes, model_path, layer_name)
 

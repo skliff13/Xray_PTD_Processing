@@ -178,6 +178,6 @@ def main():
 
 
 if __name__ == '__main__':
-    # os.sys.argv = 'train_model.py 32 /home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3 300 299 0.0001 InceptionV3 2 RMSprop -1'.split(' ')
+    # os.sys.argv = 'train_model.py 32 /home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3 3 299 0.0001 InceptionV3 2 RMSprop -1'.split(' ')
 
     main()

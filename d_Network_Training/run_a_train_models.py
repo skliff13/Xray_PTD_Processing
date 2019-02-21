@@ -5,11 +5,11 @@ from glob import glob
 
 def main():
     num_classes = 2
-    image_sz = 256
+    image_sz = 224
     # model_type = 'InceptionV3'
     data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3'
     # data_dir = '/home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0'
-    epochs = 300
+    epochs = 2
     batch_size = 32
     learning_rate = 1e-4
     # optimizer = 'RMSprop'
@@ -33,7 +33,7 @@ def main():
                         str(image_sz), str(learning_rate), model_type, str(num_classes), optimizer, str(crop_to)]
                 cmd = ' '.join(args)
                 print(cmd)
-                # os.system(cmd)
+                os.system(cmd)
 
 
 if __name__ == '__main__':

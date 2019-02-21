@@ -1,6 +1,6 @@
 import os
-os.environ['CUDA_DEVICE_ORDER'] = 'PCI_SUB_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = ''
+if __name__ == '__main__':
+    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import keras
 from keras.models import Model
 from sklearn.linear_model import LinearRegression
@@ -36,15 +36,14 @@ def get_random_val(data_dir):
 
 def main():
     num_classes = 2
-    image_sz = 256
-    model_type = VGG16
-    data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.2'
+    image_sz = 299
+    model_type = InceptionV3
+    data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3'
     batch_size = 16
-    model_path = 'models/_old/model_Sz256_VGG16_RMSprop_Ep300_Lr1.0e-04_Auc0.818.hdf5'
-    layer_name = 'block5_conv3'
-    # img_class = -1
-    # img_path = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.2/img/997802_1136_1_32951.dcm.png_aug000.png'
-    # img_path = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.2/img/005878_2278_5_271242.dcm.png_aug000.png'
+    model_path = 'models/_old/model_Sz299_InceptionV3_RMSprop_Ep300_Lr1.0e-04_Auc0.864.hdf5'
+    layer_name = 'mixed10'
+    # model_path = 'models/_old/model_Sz256_VGG16_RMSprop_Ep300_Lr1.0e-04_Auc0.818.hdf5'
+    # layer_name = 'block5_conv3'
 
     model = model_type(weights=None, include_top=True, input_shape=(image_sz, image_sz, 1), classes=num_classes)
     print('Loading model ' + model_path)
@@ -53,8 +52,11 @@ def main():
     coefs_path = model_path[:-5] + '_' + layer_name + '_coefs.txt'
     print('Loading coefs ' + coefs_path)
     coefs = np.loadtxt(coefs_path)
+    # coefs[coefs < 0] = 0
+    # coefs[0:-1] = 1. / coefs.shape[0]
+    # coefs[-1] = 0
 
-    while True:
+    for _ in range(10):
         img_path, img_class = get_random_val(data_dir)
 
         print('Reading image ' + img_path)
@@ -69,7 +71,9 @@ def main():
         layer_output = layer_model.predict(x, batch_size=batch_size)
 
         heatmap = np.matmul(layer_output, coefs[:-1])[0, ...] + coefs[-1]
-        heatmap = transform.resize(heatmap, (image_sz, image_sz))
+        heatmap *= prediction[0, 1]
+        # heatmap = (heatmap - np.min(heatmap)) / (np.max(heatmap) - np.min(heatmap))
+        heatmap = transform.resize(heatmap, (image_sz, image_sz)) / 10
         heatmap[heatmap < 0] = 0
         heatmap[heatmap > 1] = 1
 

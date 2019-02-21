@@ -1,6 +1,6 @@
 import os
-os.environ['CUDA_DEVICE_ORDER'] = 'PCI_SUB_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = ''
+if __name__ == '__main__':
+    os.environ['CUDA_VISIBLE_DEVICES'] = ''
 import keras
 import json
 import numpy as np
@@ -14,33 +14,72 @@ from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
 
 
-def load_val_data(data_dir, data_shape):
-    print('Loading validation data from ' + data_dir)
+# def load_val_data(data_dir, data_shape):
+#     print('Loading validation data from ' + data_dir)
+#
+#     x_val = []
+#     y_val = []
+#
+#     filename = 'val.txt'
+#     x = []
+#     y = []
+#
+#     df = pd.read_csv(os.path.join(data_dir, filename), sep=' ', header=None)
+#     for i, row in df.iterrows():
+#         path = os.path.join(data_dir, row[0])
+#         if os.path.isfile(path):
+#             img = img_as_float(io.imread(path))
+#             img = transform.resize(img, data_shape)
+#             img -= 0.5
+#
+#             x.append(np.expand_dims(img, -1))
+#             y.append(np.array([row[1]]))
+#
+#     x_val.append(np.array(x))
+#     y_val.append(np.array(y))
+#
+#     print('val_data:', x_val[0].shape, y_val[0].shape)
+#
+#     return x_val[0], y_val[0]
 
-    x_val = []
-    y_val = []
+
+def process_item(data_dir, data_shape, item_class, item_path, x, y, i, df):
+    if i % 1000 == 0:
+        print('%i / %i' % (i, df.shape[0]))
+
+    path = os.path.join(data_dir, item_path)
+    if os.path.isfile(path):
+        img = img_as_float(io.imread(path))
+        if img.shape != data_shape:
+            img = transform.resize(img, data_shape)
+        img = (img * 255).astype(np.uint8)
+
+        x.append(np.expand_dims(img, -1))
+        y.append(np.array([item_class]))
+
+
+def load_val_data(data_dir, data_shape):
+    print('Loading data from ' + data_dir)
 
     filename = 'val.txt'
+
     x = []
     y = []
 
     df = pd.read_csv(os.path.join(data_dir, filename), sep=' ', header=None)
+
     for i, row in df.iterrows():
-        path = os.path.join(data_dir, row[0])
-        if os.path.isfile(path):
-            img = img_as_float(io.imread(path))
-            img = transform.resize(img, data_shape)
-            img -= 0.5
+        item_path = row[0]
+        item_class = row[1]
+        process_item(data_dir, data_shape, item_class, item_path, x, y, i, df)
 
-            x.append(np.expand_dims(img, -1))
-            y.append(np.array([row[1]]))
+    x = np.array(x).astype(np.float32) / 255.
+    x -= 0.5
+    y = np.array(y)
 
-    x_val.append(np.array(x))
-    y_val.append(np.array(y))
+    print('val_data:', x.shape, y.shape)
 
-    print('val_data:', x_val[0].shape, y_val[0].shape)
-
-    return x_val[0], y_val[0]
+    return x, y
 
 
 def evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer):
@@ -50,8 +89,14 @@ def evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_
 
     model = model_type(weights=None, include_top=True, input_shape=(image_sz, image_sz, 1), classes=num_classes)
 
-    pattern = 'models/_old/model_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
-    pattern = pattern % (image_sz, model_type.__name__, optimizer.__name__, epochs, learning_rate)
+    json_path = os.path.join(data_dir, 'config.json')
+    print('Reading config from ' + json_path)
+    with open(json_path, 'r') as f:
+        config = json.load(f)
+
+    pattern = 'models/%s_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
+    pattern = pattern % (config['class_of_interest'], image_sz, model_type.__name__, optimizer.__name__, epochs,
+                         learning_rate)
 
     files = glob(pattern)
     if not files:
@@ -61,6 +106,7 @@ def evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_
     else:
         print('Loading model ' + files[0])
         model.load_weights(files[0])
+        # model = keras.models.load_model(files[0])
 
         print('Predicting values')
         predictions = model.predict(x_val, batch_size=batch_size)
@@ -70,16 +116,16 @@ def evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_
 
 def main():
     num_classes = 2
-    image_sz = 224
-    model_type = InceptionV3
-    data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.2'
-    epochs = 1000
+    # image_sz = 299
+    # model_type = InceptionV3
+    data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3'
+    epochs = 3
     batch_size = 32
     learning_rate = 1e-4
     optimizer = keras.optimizers.rmsprop
 
     d = {}
-    for model_type in [InceptionV3]:
+    for model_type in [VGG16]:
         for image_sz in [224]:
             pred, model_file, y_val = evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate,
                                          model_type, num_classes, optimizer)
