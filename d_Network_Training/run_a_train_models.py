@@ -25,7 +25,7 @@ def main():
     # for image_sz in [256]:
         for model_type in ['VGG16']:
             pattern = 'models/%s_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
-            pattern = pattern % (config['class_of_interest'], image_sz, model_type, optimizer, epochs, learning_rate)
+            pattern = pattern % (config['dataset'], image_sz, model_type, optimizer, epochs, learning_rate)
 
             files = glob(pattern)
             if not files:

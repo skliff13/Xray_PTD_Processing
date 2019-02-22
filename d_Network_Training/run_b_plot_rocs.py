@@ -13,49 +13,7 @@ from keras.applications.inception_v3 import InceptionV3
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
 
-
-# def load_val_data(data_dir, data_shape):
-#     print('Loading validation data from ' + data_dir)
-#
-#     x_val = []
-#     y_val = []
-#
-#     filename = 'val.txt'
-#     x = []
-#     y = []
-#
-#     df = pd.read_csv(os.path.join(data_dir, filename), sep=' ', header=None)
-#     for i, row in df.iterrows():
-#         path = os.path.join(data_dir, row[0])
-#         if os.path.isfile(path):
-#             img = img_as_float(io.imread(path))
-#             img = transform.resize(img, data_shape)
-#             img -= 0.5
-#
-#             x.append(np.expand_dims(img, -1))
-#             y.append(np.array([row[1]]))
-#
-#     x_val.append(np.array(x))
-#     y_val.append(np.array(y))
-#
-#     print('val_data:', x_val[0].shape, y_val[0].shape)
-#
-#     return x_val[0], y_val[0]
-
-
-def process_item(data_dir, data_shape, item_class, item_path, x, y, i, df):
-    if i % 1000 == 0:
-        print('%i / %i' % (i, df.shape[0]))
-
-    path = os.path.join(data_dir, item_path)
-    if os.path.isfile(path):
-        img = img_as_float(io.imread(path))
-        if img.shape != data_shape:
-            img = transform.resize(img, data_shape)
-        img = (img * 255).astype(np.uint8)
-
-        x.append(np.expand_dims(img, -1))
-        y.append(np.array([item_class]))
+from train_model import process_item
 
 
 def load_val_data(data_dir, data_shape):

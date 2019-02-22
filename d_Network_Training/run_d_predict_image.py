@@ -22,7 +22,7 @@ def load_prepared_image(path, data_shape):
     return img
 
 
-def get_random_val(data_dir):
+def get_random_case(data_dir):
     file_path = os.path.join(data_dir, 'val.txt')
 
     df = pd.read_csv(file_path, sep=' ', header=None)
@@ -56,8 +56,14 @@ def main():
     # coefs[0:-1] = 1. / coefs.shape[0]
     # coefs[-1] = 0
 
-    for _ in range(10):
-        img_path, img_class = get_random_val(data_dir)
+    corrs_path = model_path[:-5] + '_' + layer_name + '_corrs.txt'
+    print('Loading corrs ' + corrs_path)
+    corrs = np.loadtxt(corrs_path)
+    corrs = np.sign(corrs) * np.square(corrs)
+
+    ntests = 16
+    for j in range(ntests):
+        img_path, img_class = get_random_case(data_dir)
 
         print('Reading image ' + img_path)
         x = load_prepared_image(img_path, (image_sz, image_sz))
@@ -70,18 +76,22 @@ def main():
         layer_model = Model(inputs=model.input, outputs=model.get_layer(layer_name).output)
         layer_output = layer_model.predict(x, batch_size=batch_size)
 
-        heatmap = np.matmul(layer_output, coefs[:-1])[0, ...] + coefs[-1]
-        heatmap *= prediction[0, 1]
-        # heatmap = (heatmap - np.min(heatmap)) / (np.max(heatmap) - np.min(heatmap))
-        heatmap = transform.resize(heatmap, (image_sz, image_sz)) / 10
-        heatmap[heatmap < 0] = 0
-        heatmap[heatmap > 1] = 1
+        heatmap1 = np.matmul(layer_output, coefs[:-1])[0, ...] + coefs[-1]
+        heatmap2 = np.matmul(layer_output, corrs)[0, ...]
 
-        both = np.concatenate((x[0, :, :, 0] + 0.5, heatmap), axis=1)
-        plt.imshow(both, cmap='gray')
-        plt.colorbar()
-        plt.title('Class = %i, Prediction: %i%%' % (img_class, int(round(100 * prediction[0, 1]))))
-        plt.show()
+        heatmap1 = transform.resize(heatmap1, (image_sz, image_sz)) / 5
+        heatmap1[heatmap1 < 0] = 0
+        heatmap1[heatmap1 > 1] = 1
+
+        heatmap2 = transform.resize(heatmap2, (image_sz, image_sz)) / 1000
+        heatmap2[heatmap2 < 0] = 0
+        heatmap2[heatmap2 > 1] = 1
+
+        both = np.concatenate((x[0, :, :, 0] + 0.5, heatmap2), axis=1)
+        ax = plt.subplot(np.ceil(ntests**0.5), np.ceil(ntests**0.5), j + 1)
+        ax.imshow(both, cmap='gray')
+        ax.set_title('Class = %i, Prediction: %i%%' % (img_class, int(round(100 * prediction[0, 1]))))
+    plt.show()
 
 
 if __name__ == '__main__':

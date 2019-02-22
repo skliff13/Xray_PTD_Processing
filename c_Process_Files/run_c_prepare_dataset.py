@@ -96,7 +96,7 @@ def find_file(img_path, data_dirs):
 
 
 def process_row(out_img_dir, row, data_dirs, to_augment, train_classes, train_paths, val_classes, val_paths,
-                batch_reader, to_crop, to_noise, out_size):
+                batch_reader, to_crop, to_noise, out_size, normalization):
     img_path = row[1]['path']
     filename = row[1]['filename']
     class_number = row[1]['class_number']
@@ -120,7 +120,7 @@ def process_row(out_img_dir, row, data_dirs, to_augment, train_classes, train_pa
             else:
                 img = img0
 
-            img = normalize_by_lung_mean_std(img, mask)
+            img = normalization(img, mask)
 
             out_shape = (out_size, out_size)
             img = imresize(img, out_shape)
@@ -142,13 +142,15 @@ def prepare_dataset():
 
     # class_of_interest = 'tuberculosis'
     class_of_interest = 'abnormal_lungs'
+    ver = 'v2.0'
 
     to_augment = False
     to_crop = True
     to_noise = False
     out_size = 512
+    normalization = normalize_by_lung_mean_std
 
-    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'v2.0')
+    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, ver)
 
     out_img_dir = os.path.join(out_dir, 'img')
     print('Making dir ' + out_img_dir)
@@ -170,11 +172,12 @@ def prepare_dataset():
             print('%i / %i' % (i, df.shape[0]))
 
         process_row(out_img_dir, row, data_dirs, to_augment, train_classes, train_paths, val_classes, val_paths,
-                    batch_reader, to_crop, to_noise, out_size)
+                    batch_reader, to_crop, to_noise, out_size, normalization)
 
     config_file_path = os.path.join(out_dir, 'config.json')
     data = {'to_augment': to_augment, 'to_crop': to_crop, 'to_noise': to_noise, 'out_size': out_size,
-            'class_of_interest': class_of_interest, 'train_cases': len(train_classes), 'val_cases': len(val_classes)}
+            'normalization': normalization.__name__, 'dataset': class_of_interest + '_' + ver,
+            'train_cases': len(train_classes), 'val_cases': len(val_classes)}
     with open(config_file_path, 'wt') as f:
         json.dump(data, f)
 

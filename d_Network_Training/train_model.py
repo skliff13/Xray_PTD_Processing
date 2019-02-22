@@ -89,7 +89,7 @@ def train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_typ
         config = json.load(f)
 
     pattern = 'models/%s_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
-    pattern = pattern % (config['class_of_interest'], image_sz, model_type.__name__, optimizer.__class__.__name__,
+    pattern = pattern % (config['dataset'], image_sz, model_type.__name__, optimizer.__class__.__name__,
                          epochs, learning_rate)
 
     print('\n### Running training for ' + pattern + '\n')
