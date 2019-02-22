@@ -140,15 +140,15 @@ def process_row(out_img_dir, row, data_dirs, to_augment, train_classes, train_pa
 def prepare_dataset():
     data_dirs = ['e:/', 'f:/']
 
-    # class_of_interest = 'tuberculosis'
-    class_of_interest = 'abnormal_lungs'
-    ver = 'v2.0'
+    class_of_interest = 'tuberculosis'
+    # class_of_interest = 'abnormal_lungs'
+    ver = 'v2.5'
 
     to_augment = False
     to_crop = True
-    to_noise = False
+    to_noise = True
     out_size = 512
-    normalization = normalize_by_lung_mean_std
+    normalization = normalize_by_lung_convex_hull
 
     out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, ver)
 

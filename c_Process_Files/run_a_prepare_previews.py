@@ -61,13 +61,13 @@ def prepare_previews():
     data_dirs = ['e:/', 'f:/']
 
     # class_of_interest = 'healthy'
-    # class_of_interest = 'tuberculosis'
-    class_of_interest = 'abnormal_lungs'
+    class_of_interest = 'tuberculosis'
+    # class_of_interest = 'abnormal_lungs'
     preview_size = 256
 
     batch_size = 100
 
-    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'v2.0')
+    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'v2.5')
 
     out_img_dir = os.path.join(out_dir, 'img_previews')
     print('Making dir ' + out_img_dir)
