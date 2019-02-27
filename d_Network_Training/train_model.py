@@ -1,71 +1,17 @@
 import os
 import json
 import keras
-import numpy as np
-import pandas as pd
-from random import shuffle
 from sklearn.metrics import roc_curve, auc
-from skimage import io, img_as_float, transform
 from keras_applications.inception_resnet_v2 import InceptionResNetV2
 from keras.applications.inception_v3 import InceptionV3
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
 from keras_applications.resnet50 import ResNet50
 # from keras.preprocessing.image import ImageDataGenerator
+
 from inception_v1 import InceptionV1
 from data_gen import ModifiedDataGenerator
-
-
-def process_item(data_dir, data_shape, item_class, item_path, x, y, i, df):
-    if i % 1000 == 0:
-        print('%i / %i' % (i, df.shape[0]))
-
-    path = os.path.join(data_dir, item_path)
-    if os.path.isfile(path):
-        img = img_as_float(io.imread(path))
-        if img.shape != data_shape:
-            img = transform.resize(img, data_shape)
-        img = (img * 255).astype(np.uint8)
-
-        x.append(np.expand_dims(img, -1))
-        y.append(np.array([item_class]))
-
-
-def load_data(data_dir, data_shape, shuffle_lines=True):
-    print('Loading data from ' + data_dir)
-
-    x_train_val = []
-    y_train_val = []
-    for filename in ['train.txt', 'val.txt']:
-        x = []
-        y = []
-
-        df = pd.read_csv(os.path.join(data_dir, filename), sep=' ', header=None)
-
-        idx = list(range(df.shape[0]))
-        if shuffle_lines:
-            print('Shuffling lines')
-            shuffle(idx)
-
-            for i, row_idx in enumerate(idx):
-                item_path = df[0][row_idx]
-                item_class = df[1][row_idx]
-                process_item(data_dir, data_shape, item_class, item_path, x, y, i, df)
-        else:
-            for i, row in df.iterrows():
-                item_path = row[0]
-                item_class = row[1]
-                process_item(data_dir, data_shape, item_class, item_path, x, y, i, df)
-
-        x = np.array(x).astype(np.float32) / 255.
-        x -= 0.5
-        x_train_val.append(x)
-        y_train_val.append(np.array(y))
-
-    print('train_data:', x_train_val[0].shape, y_train_val[0].shape)
-    print('val_data:', x_train_val[1].shape, y_train_val[1].shape)
-
-    return (x_train_val[0], y_train_val[0]), (x_train_val[1], y_train_val[1])
+from load_data import load_data
 
 
 def train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer, crop_to):
@@ -181,6 +127,6 @@ def main():
 
 
 if __name__ == '__main__':
-    # os.sys.argv = 'train_model.py 32 /home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.5 300 299 0.0001 InceptionV3 2 RMSprop -1'.split(' ')
-
+    # os.sys.argv = 'train_model.py 32 /home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.5 300 299 0.0001 ' \
+    #               'InceptionV3 2 RMSprop -1'.split(' ')
     main()

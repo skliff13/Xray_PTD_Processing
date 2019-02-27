@@ -13,31 +13,7 @@ from keras.applications.inception_v3 import InceptionV3
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
 
-from train_model import process_item
-
-
-def load_val_data(data_dir, data_shape):
-    print('Loading data from ' + data_dir)
-
-    filename = 'val.txt'
-
-    x = []
-    y = []
-
-    df = pd.read_csv(os.path.join(data_dir, filename), sep=' ', header=None)
-
-    for i, row in df.iterrows():
-        item_path = row[0]
-        item_class = row[1]
-        process_item(data_dir, data_shape, item_class, item_path, x, y, i, df)
-
-    x = np.array(x).astype(np.float32) / 255.
-    x -= 0.5
-    y = np.array(y)
-
-    print('val_data:', x.shape, y.shape)
-
-    return x, y
+from load_data import load_val_data
 
 
 def evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer):

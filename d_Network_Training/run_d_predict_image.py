@@ -13,25 +13,7 @@ from keras.applications.inception_v3 import InceptionV3
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
 
-
-def load_prepared_image(path, data_shape):
-    img = img_as_float(io.imread(path))
-    img = transform.resize(img, data_shape)
-    img -= 0.5
-    img = np.expand_dims(img, axis=-1)
-    return img
-
-
-def get_random_case(data_dir):
-    file_path = os.path.join(data_dir, 'val.txt')
-
-    df = pd.read_csv(file_path, sep=' ', header=None)
-    r = randint(0, df.shape[0] - 1)
-
-    img_path = os.path.join(data_dir, df[0][r])
-    img_class = int(df[1][r])
-
-    return img_path, img_class
+from load_data import get_random_val_case, load_prepared_image
 
 
 def main():
@@ -63,7 +45,7 @@ def main():
 
     ntests = 16
     for j in range(ntests):
-        img_path, img_class = get_random_case(data_dir)
+        img_path, img_class = get_random_val_case(data_dir)
 
         print('Reading image ' + img_path)
         x = load_prepared_image(img_path, (image_sz, image_sz))
