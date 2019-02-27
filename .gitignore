@@ -21,8 +21,10 @@ _tmp/*
 data/calculated_statistics.txt
 data/study_group_*.txt
 data/list_*.txt
+data/reports/
 c_Process_Files/lungs_segmentation_caffe/test_*
 d_Network_Training/graphs/
 d_Network_Training/models/
+d_Network_Training/classifiers/
 *.cmd
 *.hdf5

@@ -1,9 +1,9 @@
 import os
 import pandas as pd
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
-from scipy.stats.stats import pearsonr
 import numpy as np
+import pickle
 
 
 def read_list_as_dict(list_path, class_names):
@@ -22,14 +22,15 @@ def read_list_as_dict(list_path, class_names):
     return d
 
 
-def compose_y(paths, d, class_names):
-    y = np.zeros((len(paths), len(class_names)))
+def compose_data(paths, d, class_names):
+    data = np.zeros((len(paths), len(class_names)))
 
     for i, path in enumerate(paths):
         filename = path[11:-11]
-        y[i, :] = d[filename]
+        data[i, :] = d[filename]
 
-    return y
+    return data
+
 
 def main():
     data_dir = '/home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0'
@@ -54,27 +55,48 @@ def main():
     x_train = df_train[cols[1:]].values
     x_val = df_val[cols[1:]].values
 
-    class_names = ['healthy', 'bronchitis', 'emphysema', 'fibrosis','focal_shadows', 'pneumonia', 'pneumosclerosis',
-                   'tuberculosis', 'is_male']
+    class_names = ['healthy', 'bronchitis', 'emphysema', 'fibrosis','focal_shadows', 'pneumonia',
+                   'pneumosclerosis', 'tuberculosis']
+    # class_names = ['healthy']
     d = read_list_as_dict(list_path, class_names)
 
-    ys_train = compose_y(paths_train, d, class_names)
-    ys_val = compose_y(paths_val, d, class_names)
+    ys_train = compose_data(paths_train, d, class_names)
+    ys_val = compose_data(paths_val, d, class_names)
 
-    each_training = 10
+    # add_names = ['age', 'is_male']
+    add_names = []
+    if add_names:
+        print('Using additional data:', add_names)
+        d_add = read_list_as_dict(list_path, add_names)
+        add_train = compose_data(paths_train, d_add, add_names)
+        add_val = compose_data(paths_val, d_add, add_names)
+        x_train = np.concatenate((x_train, add_train), axis=1)
+        x_val = np.concatenate((x_val, add_val), axis=1)
+
+    out_dir = os.path.join('classifiers', model_filename[:-5])
+    os.makedirs(out_dir, exist_ok=True)
+
+    each_training = 1
     print('Reducing training data by', each_training)
     for class_idx, class_name in enumerate(class_names):
         y_train = ys_train[:, class_idx]
         y_val = ys_val[:, class_idx]
 
-        reg = LinearRegression().fit(x_train[::each_training, :], y_train[::each_training])
-        pred_train = reg.predict(x_train)
-        pred_val = reg.predict(x_val)
+        classifier_model = LogisticRegression().fit(x_train[::each_training, :], y_train[::each_training])
+        pred_train = classifier_model.predict_proba(x_train)[:, 1]
+        pred_val = classifier_model.predict_proba(x_val)[:, 1]
 
         auc_train = roc_auc_score(y_train, pred_train)
         auc_val = roc_auc_score(y_val, pred_val)
 
         print('Class: %s, AUC %.3f (%.3f on training)' % (class_name, auc_val, auc_train))
+
+        if add_names:
+            add_str = '+'.join(add_names)
+            store_path = os.path.join(out_dir, 'logit-%s+%s.pickle' % (class_name, add_str))
+        else:
+            store_path = os.path.join(out_dir, 'logit-%s.pickle' % class_name)
+        pickle.dump(classifier_model, open(store_path, 'wb'))
 
 
 main()
