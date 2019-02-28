@@ -1,6 +1,12 @@
 import os
-if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+# if __name__ == '__main__':
+#     os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
+config = tf.ConfigProto()
+config.gpu_options.per_process_gpu_memory_fraction = 0.4
+config.gpu_options.visible_device_list = "1"
+set_session(tf.Session(config=config))
 import keras
 import numpy as np
 import pandas as pd
@@ -134,12 +140,13 @@ def analyze_layer(weights, name):
 def main():
     # model_filename = 'models/_old/model_Sz256_VGG16_RMSprop_Ep300_Lr1.0e-04_Auc0.818.hdf5'
     # model_filename = 'models/_old/model_Sz224_VGG19_RMSprop_Ep300_Lr1.0e-04_Auc0.793.hdf5'
-    model_filename = 'models/_old/model_Sz299_InceptionV3_RMSprop_Ep300_Lr1.0e-04_Auc0.864.hdf5'
+    # model_filename = 'models/_old/model_Sz299_InceptionV3_RMSprop_Ep300_Lr1.0e-04_Auc0.864.hdf5'
+    model_filename = 'models/abnormal_lungs_v2.0_Sz224_VGG16_Adam_Ep30_Lr1.0e-05_Auc0.851.hdf5'
     num_classes = 2
 
     parts = os.path.split(model_filename)[1].split('_')
-    image_sz = int(parts[1][2:])
-    model_type = os.path.split(model_filename)[1].split('_')[2]
+    image_sz = int(parts[-6][2:])
+    model_type = os.path.split(model_filename)[1].split('_')[-5]
 
     model_type = parse_model_type(model_type)
     model = model_type(weights=None, include_top=True, input_shape=(image_sz, image_sz, 1), classes=num_classes)

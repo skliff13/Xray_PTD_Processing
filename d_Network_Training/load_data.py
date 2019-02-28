@@ -116,6 +116,7 @@ def load_prepared_image(path, data_shape):
 
 
 def __get_batches(data_dir, batch_size, filename):
+    print('Getting batches of ' + filename)
     file_path = os.path.join(data_dir, filename)
 
     batches = []

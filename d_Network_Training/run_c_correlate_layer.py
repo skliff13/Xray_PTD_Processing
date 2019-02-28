@@ -1,6 +1,12 @@
 import os
-if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+# if __name__ == '__main__':
+#     os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
+config = tf.ConfigProto()
+config.gpu_options.per_process_gpu_memory_fraction = 0.4
+config.gpu_options.visible_device_list = "1"
+set_session(tf.Session(config=config))
 import keras
 import pandas as pd
 from keras.models import Model
@@ -15,15 +21,12 @@ from keras.applications.vgg19 import VGG19
 from load_data import get_train_batches, get_val_batches, load_batch
 
 
-def save_layer_coefs(batch_size, data_dir, image_sz, model_type, num_classes, model_path, layer_name):
+def save_layer_coefs(batch_size, data_dir, image_sz, layer_model, model_path, layer_name, mode_train):
     data_shape = (image_sz, image_sz)
-    batches, num_cases = get_val_batches(data_dir, batch_size)
-
-    model = model_type(weights=None, include_top=True, input_shape=(image_sz, image_sz, 1), classes=num_classes)
-
-    print('Loading model ' + model_path)
-    model.load_weights(model_path)
-    layer_model = Model(inputs=model.input, outputs=model.get_layer(layer_name).output)
+    if mode_train:
+        batches, num_cases = get_train_batches(data_dir, batch_size)
+    else:
+        batches, num_cases = get_val_batches(data_dir, batch_size)
 
     # predictions = np.zeros((0, 2), dtype=float)
     y = np.zeros((0, 1), dtype=float)
@@ -59,14 +62,17 @@ def save_layer_coefs(batch_size, data_dir, image_sz, model_type, num_classes, mo
     fpr, tpr, _ = roc_curve(y[:, 0].ravel(), act_pred.ravel())
     print('Linear model with activations AUC: %f' % auc(fpr, tpr))
 
-    out_path = model_path[:-5] + '_' + layer_name + '_coefs.txt'
-    np.savetxt(out_path, coefs)
+    if mode_train:
+        out_path = model_path[:-5] + '_' + layer_name + '_coefs.txt'
+        print('Saving coefficients to ' + out_path)
+        np.savetxt(out_path, coefs)
 
-    rs = []
-    for j in range(averages.shape[1]):
-        rs.append(pearsonr(averages[:, j], y[:, 0])[0])
-    out_path = model_path[:-5] + '_' + layer_name + '_corrs.txt'
-    np.savetxt(out_path, np.array(rs))
+        rs = []
+        for j in range(averages.shape[1]):
+            rs.append(pearsonr(averages[:, j], y[:, 0])[0])
+        print('Saving correlations to ' + out_path)
+        out_path = model_path[:-5] + '_' + layer_name + '_corrs.txt'
+        np.savetxt(out_path, np.array(rs))
 
     model_filename = os.path.split(model_path)[-1]
     out_dir = os.path.join(data_dir, 'predictions', model_filename[:-5])
@@ -77,23 +83,35 @@ def save_layer_coefs(batch_size, data_dir, image_sz, model_type, num_classes, mo
     cols = df.columns.tolist()
     cols = cols[-1:] + cols[:-1]
     df = df[cols]
-    df.to_csv(os.path.join(out_dir, layer_name + '_averages_val.txt'), index=None)
+    if mode_train:
+        out_path = os.path.join(out_dir, layer_name + '_averages_train.txt')
+    else:
+        out_path = os.path.join(out_dir, layer_name + '_averages_val.txt')
+    print('Saving averages to ' + out_path)
+    df.to_csv(out_path, index=None)
 
 
 def main():
     num_classes = 2
-    image_sz = 299
-    model_type = InceptionV3
+    image_sz = 224
+    model_type = VGG16
     batch_size = 16
     # data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3'
     data_dir = '/home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0'
-    model_path = 'models/abnormal_lungs_v2.0_Sz299_InceptionV3_RMSprop_Ep50_Lr1.0e-04_Auc0.880.hdf5'
+    # model_path = 'models/abnormal_lungs_v2.0_Sz299_InceptionV3_RMSprop_Ep50_Lr1.0e-04_Auc0.880.hdf5'
     # model_path = 'models/_old/model_Sz299_InceptionV3_RMSprop_Ep300_Lr1.0e-04_Auc0.864.hdf5'
-    layer_name = 'mixed10'
-    # model_path = 'models/_old/model_Sz256_VGG16_RMSprop_Ep300_Lr1.0e-04_Auc0.818.hdf5'
-    # layer_name = 'block5_conv3'
+    # layer_name = 'mixed10'
+    model_path = 'models/abnormal_lungs_v2.0_Sz224_VGG16_Adam_Ep30_Lr1.0e-05_Auc0.851.hdf5'
+    layer_name = 'block5_conv3'
 
-    save_layer_coefs(batch_size, data_dir, image_sz, model_type, num_classes, model_path, layer_name)
+    model = model_type(weights=None, include_top=True, input_shape=(image_sz, image_sz, 1), classes=num_classes)
+
+    print('Loading model ' + model_path)
+    model.load_weights(model_path)
+    layer_model = Model(inputs=model.input, outputs=model.get_layer(layer_name).output)
+
+    for mode_train in [True, False]:
+        save_layer_coefs(batch_size, data_dir, image_sz, layer_model, model_path, layer_name, mode_train)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,12 @@
 import os
-if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+# if __name__ == '__main__':
+#     os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
+config = tf.ConfigProto()
+config.gpu_options.per_process_gpu_memory_fraction = 0.2
+config.gpu_options.visible_device_list = "1"
+set_session(tf.Session(config=config))
 import keras
 from keras.models import Model
 from sklearn.linear_model import LinearRegression
@@ -18,14 +24,14 @@ from load_data import get_random_val_case, load_prepared_image
 
 def main():
     num_classes = 2
-    image_sz = 299
-    model_type = InceptionV3
+    image_sz = 256
+    model_type = VGG16
     data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3'
     batch_size = 16
-    model_path = 'models/_old/model_Sz299_InceptionV3_RMSprop_Ep300_Lr1.0e-04_Auc0.864.hdf5'
-    layer_name = 'mixed10'
-    # model_path = 'models/_old/model_Sz256_VGG16_RMSprop_Ep300_Lr1.0e-04_Auc0.818.hdf5'
-    # layer_name = 'block5_conv3'
+    # model_path = 'models/_old/model_Sz299_InceptionV3_RMSprop_Ep300_Lr1.0e-04_Auc0.864.hdf5'
+    # layer_name = 'mixed10'
+    model_path = 'models/_old/model_Sz256_VGG16_RMSprop_Ep300_Lr1.0e-04_Auc0.818.hdf5'
+    layer_name = 'block5_conv3'
 
     model = model_type(weights=None, include_top=True, input_shape=(image_sz, image_sz, 1), classes=num_classes)
     print('Loading model ' + model_path)

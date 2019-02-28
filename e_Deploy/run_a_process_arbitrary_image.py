@@ -136,28 +136,29 @@ def infer_neural_net(img_roi):
     x = np.expand_dims(x, axis=0)
     x = np.expand_dims(x, axis=-1)
 
-    print('Evaluating activations')
+    print('Evaluating net')
+    prob = model.predict(x, batch_size=1)[0, 1]
     layer_model = Model(inputs=model.input, outputs=model.get_layer(layer_name).output)
     layer_output = layer_model.predict(x, batch_size=1)
 
     layer_averages = np.mean(layer_output, axis=(1, 2))
 
     heat_map = np.matmul(layer_output, corrs)[0, ...]
-    heat_map = imresize(heat_map, (image_sz, image_sz)) / 1000
+    heat_map = imresize(heat_map, (image_sz, image_sz)) / 300
     heat_map[heat_map < 0] = 0
     heat_map[heat_map > 1] = 1
 
-    return layer_averages, heat_map
+    return layer_averages, heat_map, prob
 
 
-def predict_classes(layer_averages):
+def predict_classes(layer_averages, prob):
     class_names = ['healthy', 'bronchitis', 'emphysema', 'fibrosis', 'focal_shadows', 'pneumonia', 'pneumosclerosis',
                    'tuberculosis']
     classifiers_dir = '../d_Network_Training/classifiers/' \
                       'abnormal_lungs_v2.0_Sz299_InceptionV3_RMSprop_Ep50_Lr1.0e-04_Auc0.880'
 
     print('Loading trained classifiers from ' + classifiers_dir)
-    predictions = {}
+    predictions = {'abnormal_lungs': prob}
     for class_name in class_names:
         path = os.path.join(classifiers_dir, 'logit-%s.pickle' % class_name)
         classifier = pickle.load(open(path, 'rb'))
@@ -188,12 +189,12 @@ def make_colored(img_normalized, mask, heat_map, x_low, x_high, y_low, y_high):
     rect_sat = 1
     d = 3
     hsv[y_low:y_low + d, x_low:x_high, 0] = rect_hue
-    hsv[y_low:y_low + d, x_low:x_high, 0] = rect_hue
+    hsv[y_high:y_high + d, x_low:x_high, 0] = rect_hue
     hsv[y_low:y_high, x_low:x_low + d, 0] = rect_hue
     hsv[y_low:y_high, x_high:x_high + d, 0] = rect_hue
 
     hsv[y_low:y_low + d, x_low:x_high, 1] = rect_sat
-    hsv[y_low:y_low + d, x_low:x_high, 1] = rect_sat
+    hsv[y_high:y_high + d, x_low:x_high, 1] = rect_sat
     hsv[y_low:y_high, x_low:x_low + d, 1] = rect_sat
     hsv[y_low:y_high, x_high:x_high + d, 1] = rect_sat
 
@@ -203,20 +204,19 @@ def make_colored(img_normalized, mask, heat_map, x_low, x_high, y_low, y_high):
 
 
 def main():
-    input_image_path = 'test_data/tb_03.png'
-    # input_image_path = 'test_data/pneumothorax_01.jpg'
+    # input_image_path = 'test_data/tb_04.JPEG'
+    # input_image_path = 'test_data/pneumothorax_02.jpg'
     # input_image_path = 'test_data/pneum_01.png'
-    # input_image_path = 'test_data/nipple_shadows_01.jpg'
-    # input_image_path = 'test_data/crdf_id011_01.dcm'
-    # input_image_path = 'test_data/crdf_id100_03.dcm'
+    # input_image_path = 'test_data/2119_5_134322.dcm.png'
+    input_image_path = 'test_data/227.dcm'
 
     img_original = load_original_image(input_image_path)
     img_gray = convert_to_gray(img_original)
     preview = make_preview(img_gray)
     lungs = segment_lungs(preview)
     img_normalized, mask, img_roi, mask_roi, x_low, x_high, y_low, y_high = normalize_and_crop(img_gray, lungs)
-    layer_averages, heat_map = infer_neural_net(img_roi)
-    predictions = predict_classes(layer_averages)
+    layer_averages, heat_map, prob = infer_neural_net(img_roi)
+    predictions = predict_classes(layer_averages, prob)
     rgb = make_colored(img_normalized, mask, heat_map, x_low, x_high, y_low, y_high)
 
     print('Predictions')

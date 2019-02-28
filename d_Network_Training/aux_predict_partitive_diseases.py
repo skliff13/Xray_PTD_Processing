@@ -34,8 +34,10 @@ def compose_data(paths, d, class_names):
 
 def main():
     data_dir = '/home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0'
-    model_path = 'models/abnormal_lungs_v2.0_Sz299_InceptionV3_RMSprop_Ep50_Lr1.0e-04_Auc0.880.hdf5'
-    layer_name = 'mixed10'
+    # model_path = 'models/abnormal_lungs_v2.0_Sz299_InceptionV3_RMSprop_Ep50_Lr1.0e-04_Auc0.880.hdf5'
+    # layer_name = 'mixed10'
+    model_path = 'models/abnormal_lungs_v2.0_Sz224_VGG16_Adam_Ep30_Lr1.0e-05_Auc0.851.hdf5'
+    layer_name = 'block5_conv3'
     list_path = '../data/study_group_class_abnormal_lungs.txt'
 
     model_filename = os.path.split(model_path)[-1]
