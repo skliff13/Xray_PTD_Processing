@@ -18,12 +18,12 @@ def process_ith_augmented(class_number, filename, i, imgs, is_val, masks, out_im
     img = imgs[i]
     mask = masks[i]
 
-    lung_intensities = img.flatten()
-    lung_intensities = lung_intensities[mask.flatten() > 0.5]
-    mean_intensity = np.mean(lung_intensities)
-    std_intensity = np.std(lung_intensities)
-
     if to_noise:
+        lung_intensities = img.flatten()
+        lung_intensities = lung_intensities[mask.flatten() > 0.5]
+        mean_intensity = np.mean(lung_intensities)
+        std_intensity = np.std(lung_intensities)
+
         noise = np.random.normal(mean_intensity, std_intensity, img.shape)
         segmented = img * mask + noise * (1 - mask)
     else:
@@ -80,7 +80,7 @@ def get_cropping(mask_bw):
     x_low = max(0, np.where(proj_x > 0)[0][0] - d)
     x_high = min(mask_bw.shape[1], np.where(proj_x > 0)[0][-1] + d)
     y_low = max(0, np.where(proj_y > 0)[0][0] - d)
-    y_high = min(mask_bw.shape[1], np.where(proj_y > 0)[0][-1] + d)
+    y_high = min(mask_bw.shape[0], np.where(proj_y > 0)[0][-1] + d)
 
     return x_low, x_high, y_low, y_high
 

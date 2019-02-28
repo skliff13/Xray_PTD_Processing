@@ -28,3 +28,4 @@ d_Network_Training/models/
 d_Network_Training/classifiers/
 *.cmd
 *.hdf5
+e_Deploy/test_data/

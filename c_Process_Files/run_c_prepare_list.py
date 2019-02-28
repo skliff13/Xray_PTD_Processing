@@ -73,7 +73,7 @@ def get_cropping(mask_bw):
     x_low = max(0, np.where(proj_x > 0)[0][0] - d)
     x_high = min(mask_bw.shape[1], np.where(proj_x > 0)[0][-1] + d)
     y_low = max(0, np.where(proj_y > 0)[0][0] - d)
-    y_high = min(mask_bw.shape[1], np.where(proj_y > 0)[0][-1] + d)
+    y_high = min(mask_bw.shape[0], np.where(proj_y > 0)[0][-1] + d)
 
     return x_low, x_high, y_low, y_high
 
