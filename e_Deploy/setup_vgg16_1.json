@@ -1,0 +1,10 @@
+{
+  "class_names": ["healthy", "bronchitis", "emphysema", "fibrosis", "focal_shadows", "pneumonia", "pneumosclerosis", "tuberculosis"],
+  "classifiers_dir": "../d_Network_Training/classifiers/abnormal_lungs_v2.0_Sz224_VGG16_Adam_Ep30_Lr1.0e-05_Auc0.851",
+  "image_sz": 224,
+  "layer_name": "block5_conv3",
+  "model_type": "VGG16",
+  "weights_path": "../d_Network_Training/models/abnormal_lungs_v2.0_Sz224_VGG16_Adam_Ep30_Lr1.0e-05_Auc0.851.hdf5",
+  "multiplier": 20,
+  "segm_model_path": "../c_Process_Files/lungs_segmentation_tf/trained_model.hdf5"
+}
