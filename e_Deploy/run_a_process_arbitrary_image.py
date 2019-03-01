@@ -4,15 +4,17 @@ import os
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
 config = tf.ConfigProto()
-config.gpu_options.per_process_gpu_memory_fraction = 0.2
+config.gpu_options.per_process_gpu_memory_fraction = 0.5
 config.gpu_options.visible_device_list = "1"
 set_session(tf.Session(config=config))
 import pickle
+import json
 import pydicom
 import numpy as np
 from skimage import io, color, exposure, morphology
 from keras.models import load_model, Model
 from keras.applications.inception_v3 import InceptionV3
+from keras.applications.vgg16 import VGG16
 
 from imutils import imresize, normalize_by_lung_mean_std
 
@@ -67,7 +69,7 @@ def remove_small_regions(img, size):
     return img
 
 
-def segment_lungs(preview):
+def segment_lungs(preview, segm_model):
     x = preview.copy()
 
     x -= x.mean()
@@ -75,11 +77,7 @@ def segment_lungs(preview):
     x = np.expand_dims(x, axis=0)
     x = np.expand_dims(x, axis=-1)
 
-    model_path = '../c_Process_Files/lungs_segmentation_tf/trained_model.hdf5'
-    print('Loading model from ' + model_path)
-    UNet = load_model(model_path)
-
-    lungs = UNet.predict(x, batch_size=1)[..., 0].reshape(preview.shape)
+    lungs = segm_model.predict(x, batch_size=1)[..., 0].reshape(preview.shape)
     lungs = lungs > 0.5
     lungs = remove_small_regions(lungs, 0.02 * np.prod(preview.shape))
 
@@ -99,7 +97,7 @@ def get_cropping(mask_bw):
     return x_low, x_high, y_low, y_high
 
 
-def normalize_and_crop(img_gray, lungs):
+def normalize_and_crop(img_gray, lungs, out_size):
     mask = imresize(lungs, img_gray.shape, order=0)
     img_normalized = normalize_by_lung_mean_std(img_gray, mask)
     img_normalized[img_normalized < 0] = 0
@@ -109,28 +107,14 @@ def normalize_and_crop(img_gray, lungs):
     img_roi = img_normalized[y_low:y_high, x_low:x_high]
     mask_roi = mask[y_low:y_high, x_low:x_high]
 
-    out_size = 299
     img_roi = imresize(img_roi, (out_size, out_size))
     mask_roi = imresize(mask_roi, (out_size, out_size), order=0)
 
     return img_normalized, mask, img_roi, mask_roi, x_low, x_high, y_low, y_high
 
 
-def infer_neural_net(img_roi):
+def infer_neural_net(img_roi, model, layer_model, corrs, multiplier):
     image_sz = img_roi.shape[0]
-    model = InceptionV3(weights=None, include_top=True, input_shape=(image_sz, image_sz, 1), classes=2)
-
-    weights_path = '../d_Network_Training/models/' \
-                   'abnormal_lungs_v2.0_Sz299_InceptionV3_RMSprop_Ep50_Lr1.0e-04_Auc0.880.hdf5'
-    print('Loading model ' + weights_path)
-    model.load_weights(weights_path)
-
-    layer_name = 'mixed10'
-
-    corrs_path = weights_path[:-5] + '_' + layer_name + '_corrs.txt'
-    print('Loading corrs ' + corrs_path)
-    corrs = np.loadtxt(corrs_path)
-    corrs = np.sign(corrs) * np.square(corrs)
 
     x = img_roi - 0.5
     x = np.expand_dims(x, axis=0)
@@ -138,33 +122,27 @@ def infer_neural_net(img_roi):
 
     print('Evaluating net')
     prob = model.predict(x, batch_size=1)[0, 1]
-    layer_model = Model(inputs=model.input, outputs=model.get_layer(layer_name).output)
     layer_output = layer_model.predict(x, batch_size=1)
 
     layer_averages = np.mean(layer_output, axis=(1, 2))
 
     heat_map = np.matmul(layer_output, corrs)[0, ...]
-    heat_map = imresize(heat_map, (image_sz, image_sz)) / 300
+    heat_map = imresize(heat_map, (image_sz, image_sz)) * multiplier
     heat_map[heat_map < 0] = 0
     heat_map[heat_map > 1] = 1
 
     return layer_averages, heat_map, prob
 
 
-def predict_classes(layer_averages, prob):
-    class_names = ['healthy', 'bronchitis', 'emphysema', 'fibrosis', 'focal_shadows', 'pneumonia', 'pneumosclerosis',
-                   'tuberculosis']
-    classifiers_dir = '../d_Network_Training/classifiers/' \
-                      'abnormal_lungs_v2.0_Sz299_InceptionV3_RMSprop_Ep50_Lr1.0e-04_Auc0.880'
-
+def predict_classes(layer_averages, prob, class_names, classifiers_dir):
     print('Loading trained classifiers from ' + classifiers_dir)
-    predictions = {'abnormal_lungs': prob}
+    predictions = {'abnormal_lungs': round(float(prob), 3)}
     for class_name in class_names:
         path = os.path.join(classifiers_dir, 'logit-%s.pickle' % class_name)
         classifier = pickle.load(open(path, 'rb'))
 
         prediction = classifier.predict_proba(layer_averages)[:, 1]
-        predictions[class_name] = prediction[0]
+        predictions[class_name] = round(float(prediction[0]), 3)
 
     return predictions
 
@@ -203,28 +181,90 @@ def make_colored(img_normalized, mask, heat_map, x_low, x_high, y_low, y_high):
     return rgb
 
 
+def load_models(image_sz, layer_name, model_type, weights_path, segm_model_path):
+    model = model_type(weights=None, include_top=True, input_shape=(image_sz, image_sz, 1), classes=2)
+    layer_model = Model(inputs=model.input, outputs=model.get_layer(layer_name).output)
+
+    corrs_path = weights_path[:-5] + '_' + layer_name + '_corrs.txt'
+    print('Loading corrs ' + corrs_path)
+    corrs = np.loadtxt(corrs_path)
+    corrs[np.isnan(corrs)] = 0
+    corrs = np.sign(corrs) * np.square(corrs)
+
+    print('Loading weights ' + weights_path)
+    model.load_weights(weights_path)
+
+    print('Loading model from ' + segm_model_path)
+    segm_model = load_model(segm_model_path)
+    return corrs, layer_model, model, segm_model
+
+
+def load_setup1():
+    image_sz = 299
+    weights_path = '../d_Network_Training/models/' \
+                   'abnormal_lungs_v2.0_Sz299_InceptionV3_RMSprop_Ep50_Lr1.0e-04_Auc0.880.hdf5'
+    layer_name = 'mixed10'
+    model_type = InceptionV3
+    classifiers_dir = '../d_Network_Training/classifiers/' \
+                      'abnormal_lungs_v2.0_Sz299_InceptionV3_RMSprop_Ep50_Lr1.0e-04_Auc0.880'
+    class_names = ['healthy', 'bronchitis', 'emphysema', 'fibrosis', 'focal_shadows', 'pneumonia', 'pneumosclerosis',
+                   'tuberculosis']
+    multiplier = 0.003
+    segm_model_path = '../c_Process_Files/lungs_segmentation_tf/trained_model.hdf5'
+    return class_names, classifiers_dir, image_sz, layer_name, model_type, weights_path, multiplier, segm_model_path
+
+
+def load_setup2():
+    image_sz = 224
+    weights_path = '../d_Network_Training/models/abnormal_lungs_v2.0_Sz224_VGG16_Adam_Ep30_Lr1.0e-05_Auc0.851.hdf5'
+    layer_name = 'block5_conv3'
+    model_type = VGG16
+    classifiers_dir = '../d_Network_Training/classifiers/abnormal_lungs_v2.0_Sz224_VGG16_Adam_Ep30_Lr1.0e-05_Auc0.851'
+    class_names = ['healthy', 'bronchitis', 'emphysema', 'fibrosis', 'focal_shadows', 'pneumonia', 'pneumosclerosis',
+                   'tuberculosis']
+    multiplier = 20
+    segm_model_path = '../c_Process_Files/lungs_segmentation_tf/trained_model.hdf5'
+    return class_names, classifiers_dir, image_sz, layer_name, model_type, weights_path, multiplier, segm_model_path
+
+
 def main():
-    # input_image_path = 'test_data/tb_04.JPEG'
-    # input_image_path = 'test_data/pneumothorax_02.jpg'
-    # input_image_path = 'test_data/pneum_01.png'
-    # input_image_path = 'test_data/2119_5_134322.dcm.png'
-    input_image_path = 'test_data/227.dcm'
+    class_names, classifiers_dir, image_sz, layer_name, model_type, weights_path, multiplier, segm_model_path = \
+        load_setup1()
 
-    img_original = load_original_image(input_image_path)
-    img_gray = convert_to_gray(img_original)
-    preview = make_preview(img_gray)
-    lungs = segment_lungs(preview)
-    img_normalized, mask, img_roi, mask_roi, x_low, x_high, y_low, y_high = normalize_and_crop(img_gray, lungs)
-    layer_averages, heat_map, prob = infer_neural_net(img_roi)
-    predictions = predict_classes(layer_averages, prob)
-    rgb = make_colored(img_normalized, mask, heat_map, x_low, x_high, y_low, y_high)
+    corrs, layer_model, cls_model, segm_model = \
+        load_models(image_sz, layer_name, model_type, weights_path, segm_model_path)
 
-    print('Predictions')
-    for class_name in predictions:
-        print('%s: %.02f' % (class_name, predictions[class_name]))
+    files = os.listdir('test_data')
+    for file in files:
+        input_image_path = 'test_data/' + file
+        if '+' not in file and os.path.isfile(input_image_path):
+            img_original = load_original_image(input_image_path)
+            img_gray = convert_to_gray(img_original)
+            preview = make_preview(img_gray)
+            lungs = segment_lungs(preview, segm_model)
+            img_normalized, mask, img_roi, mask_roi, x_low, x_high, y_low, y_high = normalize_and_crop(img_gray, lungs, image_sz)
+            layer_averages, heat_map, prob = infer_neural_net(img_roi, cls_model, layer_model, corrs, multiplier)
+            predictions = predict_classes(layer_averages, prob, class_names, classifiers_dir)
+            rgb = make_colored(img_normalized, mask, heat_map, x_low, x_high, y_low, y_high)
 
-    io.imshow_collection((img_normalized, rgb))
-    io.show()
+            print('Predictions')
+            for class_name in predictions:
+                print('%s: %.02f' % (class_name, predictions[class_name]))
+
+            tmp = rgb * 0
+            for c in range(3):
+                tmp[:, :, c] = img_normalized
+            combined = np.concatenate((tmp, rgb), axis=1)
+
+            out_path = '%s+vgg16-abnorm%.02f.png' % (input_image_path, prob)
+            io.imsave(out_path, combined)
+
+            out_path = '%s+vgg16-abnorm%.02f.json' % (input_image_path, prob)
+            with open(out_path, 'w') as f:
+                json.dump(predictions, f)
+
+            # io.imshow_collection((img_normalized, rgb))
+            # io.show()
 
 
 if __name__ == '__main__':

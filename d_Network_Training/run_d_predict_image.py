@@ -1,11 +1,11 @@
 import os
-# if __name__ == '__main__':
-#     os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+if __name__ == '__main__':
+    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
 config = tf.ConfigProto()
-config.gpu_options.per_process_gpu_memory_fraction = 0.2
-config.gpu_options.visible_device_list = "1"
+config.gpu_options.per_process_gpu_memory_fraction = 0.5
+# config.gpu_options.visible_device_list = "1"
 set_session(tf.Session(config=config))
 import keras
 from keras.models import Model
@@ -24,13 +24,15 @@ from load_data import get_random_val_case, load_prepared_image
 
 def main():
     num_classes = 2
-    image_sz = 256
+    image_sz = 224
     model_type = VGG16
-    data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3'
-    batch_size = 16
+    # data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3'
+    data_dir = '/home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0'
+    batch_size = 1
     # model_path = 'models/_old/model_Sz299_InceptionV3_RMSprop_Ep300_Lr1.0e-04_Auc0.864.hdf5'
     # layer_name = 'mixed10'
-    model_path = 'models/_old/model_Sz256_VGG16_RMSprop_Ep300_Lr1.0e-04_Auc0.818.hdf5'
+    # model_path = 'models/_old/model_Sz256_VGG16_RMSprop_Ep300_Lr1.0e-04_Auc0.818.hdf5'
+    model_path = 'models/abnormal_lungs_v2.0_Sz224_VGG16_Adam_Ep30_Lr1.0e-05_Auc0.851.hdf5'
     layer_name = 'block5_conv3'
 
     model = model_type(weights=None, include_top=True, input_shape=(image_sz, image_sz, 1), classes=num_classes)
@@ -47,6 +49,7 @@ def main():
     corrs_path = model_path[:-5] + '_' + layer_name + '_corrs.txt'
     print('Loading corrs ' + corrs_path)
     corrs = np.loadtxt(corrs_path)
+    corrs[np.isnan(corrs)] = 0
     corrs = np.sign(corrs) * np.square(corrs)
 
     ntests = 16
@@ -71,7 +74,7 @@ def main():
         heatmap1[heatmap1 < 0] = 0
         heatmap1[heatmap1 > 1] = 1
 
-        heatmap2 = transform.resize(heatmap2, (image_sz, image_sz)) / 1000
+        heatmap2 = transform.resize(heatmap2, (image_sz, image_sz)) * 30
         heatmap2[heatmap2 < 0] = 0
         heatmap2[heatmap2 > 1] = 1
 
