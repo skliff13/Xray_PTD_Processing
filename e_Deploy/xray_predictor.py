@@ -31,9 +31,9 @@ class XrayPredictor:
 
         img_normalized, mask, img_roi, mask_roi, cropping = self.normalize_and_crop(img_gray, lungs)
 
-        layer_averages, heat_map, prob = self.infer_neural_net(img_roi)
+        desc, heat_map, prob = self.infer_neural_net(img_roi)
 
-        predictions = self.predict_classes(layer_averages, prob)
+        predictions = self.predict_classes(desc, prob)
 
         rgb = self.make_colored(img_normalized, mask, heat_map, cropping)
 
@@ -145,16 +145,17 @@ class XrayPredictor:
 
         print('Evaluating net')
         prob = m.cls_model.predict(x, batch_size=1)[0, 1]
-        layer_output = m.layer_model.predict(x, batch_size=1)
+        map_layer_output = m.map_layer_model.predict(x, batch_size=1)
 
-        layer_averages = np.mean(layer_output, axis=(1, 2))
+        # layer_averages = np.mean(map_layer_output, axis=(1, 2))
+        desc = m.desc_layer_model.predict(x, batch_size=1)
 
-        heat_map = np.matmul(layer_output, m.corrs)[0, ...]
+        heat_map = np.matmul(map_layer_output, m.corrs)[0, ...]
         heat_map = imresize(heat_map, (image_sz, image_sz)) * s.multiplier
         heat_map[heat_map < 0] = 0
         heat_map[heat_map > 1] = 1
 
-        return layer_averages, heat_map, prob
+        return desc, heat_map, prob
 
     def predict_classes(self, layer_averages, prob):
         s: XrayPredictionSettings = self.prediction_setting

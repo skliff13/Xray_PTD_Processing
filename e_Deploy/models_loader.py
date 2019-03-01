@@ -13,7 +13,8 @@ from prediction_settings import XrayPredictionSettings
 
 class ModelsLoader:
     corrs = None
-    layer_model = None
+    map_layer_model = None
+    desc_layer_model = None
     cls_model = None
     segm_model = None
     classifiers = None
@@ -40,9 +41,10 @@ class ModelsLoader:
 
         model_type = self.parse_model_type(s.model_type)
         cls_model = model_type(weights=None, include_top=True, input_shape=(s.image_sz, s.image_sz, 1), classes=2)
-        layer_model = Model(inputs=cls_model.input, outputs=cls_model.get_layer(s.layer_name).output)
+        map_layer_model = Model(inputs=cls_model.input, outputs=cls_model.get_layer(s.map_layer_name).output)
+        desc_layer_model = Model(inputs=cls_model.input, outputs=cls_model.get_layer(s.desc_layer_name).output)
 
-        corrs_path = s.weights_path[:-5] + '_' + s.layer_name + '_corrs.txt'
+        corrs_path = s.weights_path[:-5] + '_' + s.map_layer_name + '_corrs.txt'
         print('Loading corrs ' + corrs_path)
         corrs = np.loadtxt(corrs_path)
         corrs[np.isnan(corrs)] = 0
@@ -62,7 +64,8 @@ class ModelsLoader:
             classifiers[class_name] = classifier
 
         self.cls_model = cls_model
-        self.layer_model = layer_model
+        self.map_layer_model = map_layer_model
+        self.desc_layer_model = desc_layer_model
         self.corrs = corrs
         self.segm_model = segm_model
         self.classifiers = classifiers

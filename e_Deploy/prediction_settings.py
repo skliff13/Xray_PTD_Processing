@@ -17,7 +17,8 @@ class XrayPredictionSettings:
 
             self.image_sz = d['image_sz']
             self.weights_path = d['weights_path']
-            self.layer_name = d['layer_name']
+            self.map_layer_name = d['map_layer_name']
+            self.desc_layer_name = d['desc_layer_name']
             self.model_type = d['model_type']
             self.classifiers_dir = d['classifiers_dir']
             self.class_names = d['class_names']

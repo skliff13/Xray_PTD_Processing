@@ -10,8 +10,8 @@ from xray_predictor import XrayPredictor
 def main():
     xp = XrayPredictor('setup_vgg16_1.json')
 
-    to_plot = True
-    plt.figure(figsize=(16, 12))
+    to_plot = False
+    plt.figure(figsize=(12, 8))
 
     files = os.listdir('test_data')
     for file in files:

@@ -4,6 +4,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 import numpy as np
 import pickle
+import json
 
 
 def read_list_as_dict(list_path, class_names):
@@ -33,20 +34,22 @@ def compose_data(paths, d, class_names):
 
 
 def main():
-    data_dir = '/home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0'
-    # model_path = 'models/abnormal_lungs_v2.0_Sz299_InceptionV3_RMSprop_Ep50_Lr1.0e-04_Auc0.880.hdf5'
-    # layer_name = 'mixed10'
-    model_path = 'models/abnormal_lungs_v2.0_Sz224_VGG16_Adam_Ep30_Lr1.0e-05_Auc0.851.hdf5'
-    layer_name = 'block5_conv3'
-    list_path = '../data/study_group_class_abnormal_lungs.txt'
+    with open('setup_vgg16_1.json', 'r') as f:
+        d = json.load(f)
 
-    model_filename = os.path.split(model_path)[-1]
-    predictions_dir = os.path.join(data_dir, 'predictions', model_filename[:-5])
+    data_dir = d['data_dir']
+    weights_path = d['weights_path']
+    desc_layer_name = d['desc_layer_name']
+    list_path = d['list_path']
+    class_names = d['class_names']
 
-    file_path = os.path.join(predictions_dir, layer_name + '_averages_train.txt')
+    weights_filename = os.path.split(weights_path)[-1]
+    predictions_dir = os.path.join(data_dir, 'predictions', weights_filename[:-5])
+
+    file_path = os.path.join(predictions_dir, desc_layer_name + '_descs_train.txt')
     print('Loading ' + file_path)
     df_train = pd.read_csv(file_path)
-    file_path = os.path.join(predictions_dir, layer_name + '_averages_val.txt')
+    file_path = os.path.join(predictions_dir, desc_layer_name + '_descs_val.txt')
     print('Loading ' + file_path)
     df_val = pd.read_csv(file_path)
 
@@ -57,9 +60,6 @@ def main():
     x_train = df_train[cols[1:]].values
     x_val = df_val[cols[1:]].values
 
-    class_names = ['healthy', 'bronchitis', 'emphysema', 'fibrosis','focal_shadows', 'pneumonia',
-                   'pneumosclerosis', 'tuberculosis']
-    # class_names = ['healthy']
     d = read_list_as_dict(list_path, class_names)
 
     ys_train = compose_data(paths_train, d, class_names)
@@ -75,7 +75,7 @@ def main():
         x_train = np.concatenate((x_train, add_train), axis=1)
         x_val = np.concatenate((x_val, add_val), axis=1)
 
-    out_dir = os.path.join('classifiers', model_filename[:-5])
+    out_dir = os.path.join('classifiers', weights_filename[:-5])
     os.makedirs(out_dir, exist_ok=True)
 
     each_training = 1
