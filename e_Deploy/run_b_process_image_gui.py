@@ -11,7 +11,7 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter.filedialog import askopenfilename
 
-from imutils import imresize
+from imutils import imresize, to_uint8
 from xray_predictor import XrayPredictor
 
 
@@ -102,6 +102,9 @@ class MainWindow(Tk):
         self.max_img_width = 950
         self.max_img_height = 650
 
+        img = Image("photo", file="images/icon320a.png")
+        self.tk.call('wm', 'iconphoto', self._w, img)
+
         self.main_menu = MainMenu(self)
         self.status_bar = StatusBar(self)
         self.status_bar.set_status('Ready')
@@ -122,7 +125,7 @@ class MainWindow(Tk):
         self.mainloop()
 
     def open_xray_image(self, event=None):
-        formats = '*.jpg *.png *.bmp *.jpeg *.dcm'
+        formats = '*.jpg *.png *.bmp *.jpeg *.dcm *.JPG *.JPEG *.PNG *.BMP *.DCM'
         file_path = askopenfilename(initialdir='test_data/',
                                     filetypes=(('Image or DICOM files', formats), ('All Files', '*.*')),
                                     title='Choose a file.')
@@ -146,7 +149,7 @@ class MainWindow(Tk):
         rs = min(self.max_img_height / combined.shape[0], self.max_img_width / combined.shape[1])
         new_shape = (int(combined.shape[0] * rs), int(combined.shape[1] * rs))
         combined = imresize(combined, new_shape)
-        combined = (combined * 255).astype(np.uint8)
+        combined = to_uint8(combined)
 
         preview = PIL.Image.fromarray(combined)
         preview = ImageTk.PhotoImage(preview)

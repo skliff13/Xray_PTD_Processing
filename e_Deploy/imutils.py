@@ -4,8 +4,6 @@ from random import randint
 from skimage import transform, exposure
 from skimage.morphology import convex_hull_image
 
-from image_gen import ImageDataGenerator
-
 
 def imresize(m, new_shape, order=1, mode='constant'):
     dtype = m.dtype
@@ -56,64 +54,3 @@ def to_uint8(img):
     img[img > 1] = 1
     return (img * 255).astype(np.uint8)
 
-
-def augment_image(img, mask):
-    imgs = [img]
-    masks = [mask]
-
-    r = 5
-    dbs = [[0, 0, 0, 15], [0, 0, 10, 0], [10, 0, 0, 0], [10, 0, 0, 15], [0, 10, 0, 0],
-           [0, 10, 10, 0], [10, 10, 0, 0], [10, 0, 10, 0], [0, 10, 0, 15], [0, 0, 10, 15]]
-
-    for db in dbs:
-        dx1 = db[0] + randint(0, r - 1)
-        dy1 = db[1] + randint(0, r - 1)
-        dx2 = db[2] + randint(0, r - 1)
-        dy2 = db[3] + randint(0, r - 1)
-        ii = [dy1, img.shape[0] - dy2]
-        jj = [dx1, img.shape[0] - dx2]
-
-        imgs.append(imresize(img[ii[0]:ii[1], jj[0]:jj[1]], img.shape))
-        masks.append(imresize(mask[ii[0]:ii[1], jj[0]:jj[1]], img.shape))
-
-        small_shape = (ii[1] - ii[0], jj[1] - jj[0])
-
-        img1 = img * 0
-        img1[ii[0]:ii[1], jj[0]:jj[1]] = imresize(img, small_shape)
-        imgs.append(img1)
-
-        mask1 = mask * 0
-        mask1[ii[0]:ii[1], jj[0]:jj[1]] = imresize(mask, small_shape)
-        masks.append(mask1)
-
-    return imgs, masks
-
-
-def augment_image_hard(img, mask, num_copies=20):
-    gen = ImageDataGenerator(rotation_range=10,
-                                   width_shift_range=0.1,
-                                   height_shift_range=0.1,
-                                   rescale=1.,
-                                   zoom_range=0.2,
-                                   fill_mode='nearest',
-                                   cval=0)
-
-    imgs = [img]
-    masks = [mask]
-
-    x = np.expand_dims(img, axis=0)
-    x = np.expand_dims(x, axis=-1)
-    y = np.expand_dims(mask, axis=0)
-    y = np.expand_dims(y, axis=-1)
-
-    i = 0
-    for xx, yy in gen.flow(x, y, batch_size=1):
-        if i == num_copies:
-            break
-        i += 1
-
-        imgs.append(np.squeeze(xx))
-        masks.append(np.squeeze(yy))
-
-
-    return imgs, masks
