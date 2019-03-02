@@ -19,11 +19,12 @@ class XrayPredictor:
     def __init__(self, setup_file_path):
         self.prediction_setting = XrayPredictionSettings().load_setup(setup_file_path)
         self.models = ModelsLoader().load_models(self.prediction_setting)
+        self.img_original = None
 
     def load_and_predict_image(self, input_image_path):
-        img_original = self.load_original_image(input_image_path)
+        self.img_original = self.load_original_image(input_image_path)
 
-        img_gray = self.convert_to_gray(img_original)
+        img_gray = self.convert_to_gray(self.img_original)
 
         preview = self.make_preview(img_gray)
 

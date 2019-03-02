@@ -1,5 +1,7 @@
 import os
 import json
+import time
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io
@@ -7,13 +9,13 @@ from skimage import io
 from xray_predictor import XrayPredictor
 
 
-def pred2str(predcictions, items_per_row=3):
+def pred2str(predictions, items_per_row=3):
     rows = []
 
     i = 0
     row = ''
-    for class_name in predcictions:
-        row += class_name + '=' + str(predcictions[class_name])
+    for class_name in predictions:
+        row += class_name + '=' + str(predictions[class_name])
         i += 1
 
         if i % items_per_row !=0:
@@ -29,16 +31,21 @@ def pred2str(predcictions, items_per_row=3):
 
 
 def main():
+    warnings.filterwarnings('ignore')
+
     xp = XrayPredictor('setup_vgg16_1.json')
 
-    to_plot = True
-    plt.figure(figsize=(12, 8))
+    to_plot = False
+    plt.figure(figsize=(10, 7))
 
     files = os.listdir('test_data')
     for file in files:
         input_image_path = 'test_data/' + file
         if '+' not in file and os.path.isfile(input_image_path):
+            start = time.time()
             predictions, rgb, img_normalized = xp.load_and_predict_image(input_image_path)
+            elapsed = time.time() - start
+            print('Time elapsed: %.02f sec' % elapsed)
 
             tmp = rgb * 0
             for c in range(3):
@@ -52,10 +59,10 @@ def main():
 
                 out_path = '%s+vgg16-abnorm%.02f.json' % (input_image_path, prob)
                 with open(out_path, 'w') as f:
-                    json.dump(predictions, f)
+                    json.dump(predictions, f, indent=2)
             else:
                 plt.imshow(combined)
-                title = '%s+vgg16\n' % input_image_path
+                title = '%s+vgg16 (%.2f sec)\n' % (input_image_path, elapsed)
                 title += pred2str(predictions)
                 plt.title(title)
                 plt.pause(1.0)
