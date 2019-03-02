@@ -62,6 +62,8 @@ class XrayPredictor:
                 img_gray = img_original[:, :, 0].copy()
             elif img_original.shape[2] == 3:
                 img_gray = color.rgb2gray(img_original)
+            elif img_original.shape[2] == 4:
+                img_gray = color.rgb2gray(img_original[:, :, 0:3])
             else:
                 raise Exception('Unsupported number of channels of the input image: ' + img_original.shape[2])
         else:

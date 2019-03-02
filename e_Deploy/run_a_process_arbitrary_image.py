@@ -7,10 +7,31 @@ from skimage import io
 from xray_predictor import XrayPredictor
 
 
+def pred2str(predcictions, items_per_row=3):
+    rows = []
+
+    i = 0
+    row = ''
+    for class_name in predcictions:
+        row += class_name + '=' + str(predcictions[class_name])
+        i += 1
+
+        if i % items_per_row !=0:
+            row += ', '
+        else:
+            rows.append(row)
+            row = ''
+
+    if row:
+        rows.append(row)
+
+    return '\n'.join(rows)
+
+
 def main():
     xp = XrayPredictor('setup_vgg16_1.json')
 
-    to_plot = False
+    to_plot = True
     plt.figure(figsize=(12, 8))
 
     files = os.listdir('test_data')
@@ -34,7 +55,8 @@ def main():
                     json.dump(predictions, f)
             else:
                 plt.imshow(combined)
-                title = '%s+vgg16-abnorm%.02f' % (input_image_path, prob)
+                title = '%s+vgg16\n' % input_image_path
+                title += pred2str(predictions)
                 plt.title(title)
                 plt.pause(1.0)
 
