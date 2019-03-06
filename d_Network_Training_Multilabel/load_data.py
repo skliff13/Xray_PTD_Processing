@@ -5,7 +5,7 @@ from random import shuffle, randint
 from skimage import io, img_as_float, transform
 
 
-def process_item(data_dir, data_shape, item_class, item_path, x, y, i, df):
+def process_item(data_dir, data_shape, item_classes, item_path, x, y, i, df):
     if i % 1000 == 0:
         print('%i / %i' % (i, df.shape[0]))
 
@@ -17,7 +17,7 @@ def process_item(data_dir, data_shape, item_class, item_path, x, y, i, df):
         img = (img * 255).astype(np.uint8)
 
         x.append(np.expand_dims(img, -1))
-        y.append(np.array([item_class]))
+        y.append(np.array(item_classes))
 
 
 def load_data(data_dir, data_shape, shuffle_lines=True):
@@ -25,7 +25,7 @@ def load_data(data_dir, data_shape, shuffle_lines=True):
 
     x_train_val = []
     y_train_val = []
-    for filename in ['train.txt', 'val.txt']:
+    for filename in ['train_multilabel.txt', 'val_multilabel.txt']:
         x = []
         y = []
 
@@ -38,13 +38,21 @@ def load_data(data_dir, data_shape, shuffle_lines=True):
 
             for i, row_idx in enumerate(idx):
                 item_path = df[0][row_idx]
-                item_class = df[1][row_idx]
-                process_item(data_dir, data_shape, item_class, item_path, x, y, i, df)
+
+                item_classes = []
+                for j in range(1, df.shape[1]):
+                    item_classes.append(df[j][row_idx])
+
+                process_item(data_dir, data_shape, item_classes, item_path, x, y, i, df)
         else:
             for i, row in df.iterrows():
                 item_path = row[0]
-                item_class = row[1]
-                process_item(data_dir, data_shape, item_class, item_path, x, y, i, df)
+
+                item_classes = []
+                for j in range(1, df.shape[1]):
+                    item_classes.append(row[j])
+
+                process_item(data_dir, data_shape, item_classes, item_path, x, y, i, df)
 
         x = np.array(x).astype(np.float32) / 255.
         x -= 0.5
