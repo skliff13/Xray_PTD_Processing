@@ -142,6 +142,7 @@ def main():
     # model_filename = 'models/_old/model_Sz224_VGG19_RMSprop_Ep300_Lr1.0e-04_Auc0.793.hdf5'
     # model_filename = 'models/_old/model_Sz299_InceptionV3_RMSprop_Ep300_Lr1.0e-04_Auc0.864.hdf5'
     model_filename = 'models/abnormal_lungs_v2.0_Sz224_VGG16_Adam_Ep30_Lr1.0e-05_Auc0.851.hdf5'
+    # model_filename = 'models/abnormal_lungs_v2.0_Sz224_VGG19_Adam_Ep30_Lr1.0e-05_Auc0.847.hdf5'
     num_classes = 2
 
     parts = os.path.split(model_filename)[1].split('_')

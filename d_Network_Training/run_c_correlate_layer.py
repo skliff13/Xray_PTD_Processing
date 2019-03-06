@@ -41,8 +41,8 @@ def parse_model_type(model_type_name):
         return None
 
 
-def save_layer_coefs(batch_size, data_dir, image_sz, map_layer_model, desc_layer_model, weights_path,
-                         map_layer_name, desc_layer_name, mode_train):
+def save_layer_coefs(batch_size, data_dir, image_sz, map_layer_model, desc_layer_model, weights_path, map_layer_name,
+                     desc_layer_name, mode_train):
     data_shape = (image_sz, image_sz)
     if mode_train:
         batches, _ = get_train_batches(data_dir, batch_size)
@@ -83,10 +83,11 @@ def save_layer_coefs(batch_size, data_dir, image_sz, map_layer_model, desc_layer
         for item_path, _ in batch:
             paths.append(item_path)
 
-    coefs = assess_auc(averages, 'map', y)
     # assess_auc(descs, 'desc', y)
 
     if mode_train:
+        coefs = assess_auc(averages, 'map', y)
+
         out_path = weights_path[:-5] + '_' + map_layer_name + '_train_coefs.txt'
         print('Saving coefficients to ' + out_path)
         np.savetxt(out_path, coefs)
@@ -106,6 +107,7 @@ def save_layer_coefs(batch_size, data_dir, image_sz, map_layer_model, desc_layer
 
 
 def assess_auc(x, kind, y):
+    print('Training Logit classifier')
     reg = LinearRegression().fit(x, y[:, 0])
     coefs = np.append(reg.coef_, [reg.intercept_])
     act_pred = np.matmul(x, coefs[:-1])
@@ -132,7 +134,7 @@ def main():
     num_classes = 2
     batch_size = 16
 
-    with open('setup_vgg16_1.json', 'r') as f:
+    with open('setup_vgg19_1.json', 'r') as f:
         d = json.load(f)
 
     image_sz = d['image_sz']

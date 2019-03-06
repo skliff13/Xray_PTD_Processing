@@ -83,27 +83,28 @@ def make_study_group():
 
     is_vals = []
     val_cases_count = 0
-    train_controls = 0
-    train_class = 0
-    val_controls = 0
-    val_class = 0
+    train_controls_count = 0
+    train_class_count = 0
+    val_controls_count = 0
+    val_class_count = 0
     for i, card_number in enumerate(card_numbers):
         is_val = int(card_number in val_card_numbers)
         is_vals.append(is_val)
         val_cases_count += is_val
 
         if not is_val:
-            train_controls += class_numbers[i] == 0
-            train_class += class_numbers[i] == 1
+            train_controls_count += class_numbers[i] == 0
+            train_class_count += class_numbers[i] == 1
         else:
-            val_controls += class_numbers[i] == 0
-            val_class += class_numbers[i] == 1
+            val_controls_count += class_numbers[i] == 0
+            val_class_count += class_numbers[i] == 1
 
     print('\nUnique patients: %i, validation patient: %i' % (len(unique_card_numbers), num_val_cards))
     print('All cases: %i, validation images: %i' % (len(paths), val_cases_count))
 
     print('\nControls vs. Class:')
-    print('Training: %i vs. %i,    Validation: %i vs. %i' % (train_controls, train_class, val_controls, val_class))
+    print('Training: %i vs. %i,    Validation: %i vs. %i' % (train_controls_count, train_class_count,
+                                                             val_controls_count, val_class_count))
 
     df = pd.DataFrame(data={'path': paths, 'filename': filenames, 'age': ages, 'is_male': is_males,
                             'class_number': class_numbers, 'is_val': is_vals,'healthy': healthy,

@@ -34,7 +34,7 @@ def compose_data(paths, d, class_names):
 
 
 def main():
-    with open('setup_vgg16_1.json', 'r') as f:
+    with open('setup_vgg19_1.json', 'r') as f:
         d = json.load(f)
 
     data_dir = d['data_dir']

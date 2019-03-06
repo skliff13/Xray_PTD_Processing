@@ -1,11 +1,11 @@
 import os
-if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+# if __name__ == '__main__':
+#     os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
 config = tf.ConfigProto()
 config.gpu_options.per_process_gpu_memory_fraction = 0.5
-# config.gpu_options.visible_device_list = "1"
+config.gpu_options.visible_device_list = "1"
 set_session(tf.Session(config=config))
 import keras
 from keras.models import Model

@@ -44,7 +44,7 @@ class ModelsLoader:
         map_layer_model = Model(inputs=cls_model.input, outputs=cls_model.get_layer(s.map_layer_name).output)
         desc_layer_model = Model(inputs=cls_model.input, outputs=cls_model.get_layer(s.desc_layer_name).output)
 
-        corrs_path = s.weights_path[:-5] + '_' + s.map_layer_name + '_corrs.txt'
+        corrs_path = s.weights_path[:-5] + '_' + s.map_layer_name + '_train_corrs.txt'
         print('Loading corrs ' + corrs_path)
         corrs = np.loadtxt(corrs_path)
         corrs[np.isnan(corrs)] = 0

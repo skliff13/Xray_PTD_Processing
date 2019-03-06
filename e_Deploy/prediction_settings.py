@@ -13,7 +13,11 @@ class XrayPredictionSettings:
 
     def load_setup(self, json_file_path):
         with open(json_file_path, 'r') as f:
+            print('Loading setup from ' + json_file_path)
             d = json.load(f)
+
+            for key in d:
+                print('#   ', key, ':', d[key])
 
             self.image_sz = d['image_sz']
             self.weights_path = d['weights_path']

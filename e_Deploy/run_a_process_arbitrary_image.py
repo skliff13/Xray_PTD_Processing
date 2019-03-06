@@ -30,42 +30,46 @@ def pred2str(predictions, items_per_row=3):
     return '\n'.join(rows)
 
 
+def save_or_plot_combined_image(elapsed, img_normalized, input_image_path, predictions, rgb, to_plot):
+    tmp = rgb * 0
+    for c in range(3):
+        tmp[:, :, c] = img_normalized
+    combined = np.concatenate((tmp, rgb), axis=1)
+    prob = predictions['abnormal_lungs']
+    if not to_plot:
+        out_path = '%s+heat-abnorm%.02f.png' % (input_image_path, prob)
+        io.imsave(out_path, combined)
+
+        out_path = '%s+heat-abnorm%.02f.json' % (input_image_path, prob)
+        with open(out_path, 'w') as f:
+            json.dump(predictions, f, indent=2)
+    else:
+        plt.imshow(combined)
+        title = '%s+heat (%.2f sec)\n' % (input_image_path, elapsed)
+        title += pred2str(predictions)
+        plt.title(title)
+        plt.pause(1.0)
+
+
 def main():
     warnings.filterwarnings('ignore')
 
-    xp = XrayPredictor('setup_vgg16_1.json')
+    xp = XrayPredictor('setup_vgg19_1.json')
 
     to_plot = False
     plt.figure(figsize=(10, 7))
 
-    files = os.listdir('test_data')
+    dir_with_images = 'test_data/val'
+    files = os.listdir(dir_with_images)
     for file in files:
-        input_image_path = 'test_data/' + file
+        input_image_path = os.path.join(dir_with_images, file)
         if '+' not in file and os.path.isfile(input_image_path):
             start = time.time()
             predictions, rgb, img_normalized = xp.load_and_predict_image(input_image_path)
             elapsed = time.time() - start
             print('Time elapsed: %.02f sec' % elapsed)
 
-            tmp = rgb * 0
-            for c in range(3):
-                tmp[:, :, c] = img_normalized
-            combined = np.concatenate((tmp, rgb), axis=1)
-
-            prob = predictions['abnormal_lungs']
-            if not to_plot:
-                out_path = '%s+vgg16-abnorm%.02f.png' % (input_image_path, prob)
-                io.imsave(out_path, combined)
-
-                out_path = '%s+vgg16-abnorm%.02f.json' % (input_image_path, prob)
-                with open(out_path, 'w') as f:
-                    json.dump(predictions, f, indent=2)
-            else:
-                plt.imshow(combined)
-                title = '%s+vgg16 (%.2f sec)\n' % (input_image_path, elapsed)
-                title += pred2str(predictions)
-                plt.title(title)
-                plt.pause(1.0)
+            save_or_plot_combined_image(elapsed, img_normalized, input_image_path, predictions, rgb, to_plot)
 
 
 if __name__ == '__main__':

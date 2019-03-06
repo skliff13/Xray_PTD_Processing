@@ -1,5 +1,11 @@
 import os
 import json
+import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
+config = tf.ConfigProto()
+config.gpu_options.per_process_gpu_memory_fraction = 0.5
+config.gpu_options.visible_device_list = "1"
+set_session(tf.Session(config=config))
 import keras
 from sklearn.metrics import roc_curve, auc
 from keras_applications.inception_resnet_v2 import InceptionResNetV2

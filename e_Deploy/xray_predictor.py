@@ -150,8 +150,10 @@ class XrayPredictor:
         prob = m.cls_model.predict(x, batch_size=1)[0, 1]
         map_layer_output = m.map_layer_model.predict(x, batch_size=1)
 
-        # layer_averages = np.mean(map_layer_output, axis=(1, 2))
-        desc = m.desc_layer_model.predict(x, batch_size=1)
+        if s.desc_layer_name == s.map_layer_name:
+            desc = np.mean(map_layer_output, axis=(1, 2))
+        else:
+            desc = m.desc_layer_model.predict(x, batch_size=1)
 
         heat_map = np.matmul(map_layer_output, m.corrs)[0, ...]
         heat_map = imresize(heat_map, (image_sz, image_sz)) * s.multiplier
@@ -160,14 +162,14 @@ class XrayPredictor:
 
         return desc, heat_map, prob
 
-    def predict_classes(self, layer_averages, prob):
+    def predict_classes(self, desc, prob):
         s: XrayPredictionSettings = self.prediction_setting
         m: ModelsLoader = self.models
 
         predictions = {'abnormal_lungs': round(float(prob), 3)}
         for class_name in s.class_names:
             classifier = m.classifiers[class_name]
-            prediction = classifier.predict_proba(layer_averages)[:, 1]
+            prediction = classifier.predict_proba(desc)[:, 1]
             predictions[class_name] = round(float(prediction[0]), 3)
 
         return predictions
