@@ -1,12 +1,9 @@
 import os
-import numpy as np
 import pandas as pd
-from random import shuffle, randint
-from skimage import io, img_as_float, transform
 
 
 def main():
-    data_dir = '/home/skliff13/work/uiip/datasets/abnormal_lungs/v2.0'
+    data_dir = '/home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0'
 
     class_names = ['class_number', 'pneumonia', 'tuberculosis']
 
@@ -16,9 +13,6 @@ def main():
         print('Processing ' + train_val)
 
         df = pd.read_csv(os.path.join(data_dir, train_val + '.txt'), header=None, sep=' ')
-
-        # TODO: data reduce for development
-        df = df.loc[df.index % 100 == 0]
 
         paths = []
         class_numbers = []
@@ -43,7 +37,7 @@ def main():
         for j in range(len(class_names)):
             column_name = 'b_class%03i' % j
             d[column_name] = class_numbers[j]
-            print('Cases with label ', j, ':', sum(class_numbers[j]))
+            print('Cases with label', j, ':', sum(class_numbers[j]))
 
         print('Saving to ' + out_path)
         pd.DataFrame.from_dict(d).to_csv(out_path, sep=' ', index=None, header=None)
@@ -54,7 +48,7 @@ def read_classes_to_dict(class_names):
     df = pd.read_csv('../data/study_group_class_abnormal_lungs.txt')
     d = {}
     for i, row in df.iterrows():
-        if i % 1000 == 0:
+        if i % 10000 == 0:
             print('%i / %i' % (i, df.shape[0]))
 
         l = []

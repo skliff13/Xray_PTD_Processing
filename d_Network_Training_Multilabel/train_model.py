@@ -3,14 +3,14 @@ import json
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
 config = tf.ConfigProto()
-config.gpu_options.per_process_gpu_memory_fraction = 0.5
+config.gpu_options.per_process_gpu_memory_fraction = 0.6
 config.gpu_options.visible_device_list = "1"
 set_session(tf.Session(config=config))
 import keras
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_auc_score
 from keras_applications.inception_resnet_v2 import InceptionResNetV2
 from keras.applications.inception_v3 import InceptionV3
-from keras.applications.vgg16 import VGG16
+from vgg16_multilabel import VGG16
 from keras.applications.vgg19 import VGG19
 from keras_applications.resnet50 import ResNet50
 
@@ -79,10 +79,13 @@ def train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_typ
 
     print(x_val.shape)
     predictions = model.predict(x_val, batch_size=batch_size)
-    fpr, tpr, _ = roc_curve(y_val[:, 1].ravel(), predictions[:, 1].ravel())
-    roc_auc = auc(fpr, tpr)
+    mean_auc = 0.0
+    for j in range(num_classes):
+        roc_auc = roc_auc_score(y_val[:, j].ravel(), predictions[:, j].ravel())
+        print('Class %i AUC: %.03f' % (j, roc_auc))
+        mean_auc += roc_auc / num_classes
 
-    model_filename = pattern.replace('*', '_Auc%.3f' % roc_auc)
+    model_filename = pattern.replace('*', '_MeanAuc%.3f' % mean_auc)
     print('Saving model to ' + model_filename)
     model.save_weights(model_filename)
 
@@ -132,6 +135,6 @@ def main():
 
 
 if __name__ == '__main__':
-    os.sys.argv = 'train_model.py 32 /home/skliff13/work/uiip/datasets/abnormal_lungs/v2.0 3 224 0.0001 ' \
-                  'VGG16 3 RMSprop -1'.split(' ')
+    os.sys.argv = 'train_model.py 16 /home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0 30 224 0.00001 ' \
+                  'VGG16 3 Adam -1'.split(' ')
     main()
