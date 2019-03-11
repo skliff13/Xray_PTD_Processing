@@ -2,8 +2,8 @@ import os
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
 config = tf.ConfigProto()
-config.gpu_options.per_process_gpu_memory_fraction = 0.4
-config.gpu_options.visible_device_list = "1"
+config.gpu_options.per_process_gpu_memory_fraction = 0.6
+config.gpu_options.visible_device_list = "0"
 set_session(tf.Session(config=config))
 import keras
 import json
@@ -21,23 +21,11 @@ from keras.applications.vgg19 import VGG19
 from load_data import load_val_data
 
 
-def evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer):
-    json_path = os.path.join(data_dir, 'config.json')
-    print('Reading config from ' + json_path)
-    with open(json_path, 'r') as f:
-        config = json.load(f)
-
-    pattern = 'models/%s_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
-    pattern = pattern % (config['class_of_interest'], image_sz, model_type.__name__, optimizer.__name__, epochs,
-                         learning_rate)
-
-    files = glob(pattern)
-    if not files:
-        print('\n### File not found: ' + pattern + '\n')
+def evaluate_model(batch_size, data_dir, image_sz, model_type, num_classes, weights_path):
+    if not os.path.isfile(weights_path):
+        print('\n### File not found: ' + weights_path + '\n')
 
         return None, None, None
-
-    weights_path = files[0]
 
     model_filename = os.path.split(weights_path)[-1]
     pred_dir = os.path.join(data_dir, 'predictions', model_filename[:-5])
@@ -45,13 +33,11 @@ def evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_
 
     pred_path = os.path.join(pred_dir, 'pred_val.txt')
     if os.path.isfile(pred_path):
+        print('Loading cached predictions from ' + pred_path)
         predictions = pd.read_csv(pred_path, header=None).get_values()
-        df = pd.read_csv(os.path.join(data_dir, 'val.txt'), header=None, sep=' ')
-        y_val = df[1].get_values()
-
     else:
         data_shape = (image_sz, image_sz)
-        (x_val, y_val) = load_val_data(data_dir, data_shape)
+        (x_val, _) = load_val_data(data_dir, data_shape)
 
         model = model_type(weights=None, include_top=True, input_shape=(image_sz, image_sz, 1), classes=num_classes)
 
@@ -61,30 +47,16 @@ def evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_
         print('Predicting values')
         predictions = model.predict(x_val, batch_size=batch_size)
 
+        print('Saving predictions to ' + pred_path)
         df = pd.DataFrame(data=predictions)
-        df.to_csv(pred_path)
+        df.to_csv(pred_path, header=None, index=None)
 
-    y_val = keras.utils.to_categorical(y_val, num_classes)
-    return predictions, weights_path, y_val
+    return predictions, weights_path
 
 
-def main():
-    num_classes = 2
-    # image_sz = 299
-    # model_type = InceptionV3
-    data_dir = '/home/skliff13/work/PTD_Xray/datasets/tuberculosis/v2.3'
-    epochs = 3
-    batch_size = 32
-    learning_rate = 1e-4
-    optimizer = keras.optimizers.rmsprop
-
-    d = {}
-    for model_type in [VGG16]:
-        for image_sz in [224]:
-            pred, model_file, y_val = evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate,
-                                         model_type, num_classes, optimizer)
-            if pred is not None:
-                d[model_file] = pred
+def make_combined(d):
+    if len(d) < 2:
+        return
 
     sum_pred = None
     for model_file in d:
@@ -94,22 +66,54 @@ def main():
             sum_pred += d[model_file]
     d['combined'] = sum_pred
 
+
+def main():
+    num_classes = 2
+    data_dir = '/home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0'
+    batch_size = 16
+
+    tests = list()
+    tests.append([VGG16, 224, 'models/abnormal_lungs_v2.0_Sz224_VGG16_Adam_Ep30_Lr1.0e-05_Auc0.851.hdf5'])
+    tests.append([VGG19, 224, 'models/abnormal_lungs_v2.0_Sz224_VGG19_Adam_Ep30_Lr1.0e-05_Auc0.847.hdf5'])
+    tests.append([InceptionV3, 299, 'models/abnormal_lungs_v2.0_Sz299_InceptionV3_RMSprop_Ep50_Lr1.0e-04_Auc0.880.hdf5'])
+
+    df = pd.read_csv(os.path.join(data_dir, 'val.txt'), header=None, sep=' ')
+    y_val = df[1].get_values()
+    y_val = keras.utils.to_categorical(y_val, num_classes)
+
+    d = {}
+    for model_type, image_sz, weights_path in tests:
+        pred, model_file = evaluate_model(batch_size, data_dir, image_sz, model_type, num_classes, weights_path)
+        if pred is not None:
+            d[model_type.__name__] = pred
+
+    # make_combined(d)
+
     lw = 2
+    # plt.figure(figsize=(4.5, 4.5), dpi=600)
     plt.figure(figsize=(6, 6))
     plt.plot([0, 1], [0, 1], color='lime', lw=lw, linestyle='--', label='baseline')
+
+    line_styles = [':', '-.', '-']
+    counter = 0
 
     for model_file in d:
         pred = d[model_file]
         fpr, tpr, _ = roc_curve(y_val[:, 1].ravel(), pred[:, 1].ravel())
         roc_auc = auc(fpr, tpr)
-        plt.plot(fpr, tpr, lw=lw, label=('%s (AUC %0.3f)' % (model_file, roc_auc)))
+
+        ls = line_styles[counter]
+        counter = (counter + 1) % len(line_styles)
+
+        plt.plot(fpr, tpr, lw=lw, label=('%s (AUC %0.3f)' % (model_file, roc_auc)), linestyle=ls)
 
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.0])
-    plt.title('ROC curves')
+    # plt.title('ROC curves')
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.legend(loc='lower right', prop={'size': 6})
+    plt.legend(loc='lower right', prop={'size': 10})
+    # plt.savefig('fig.png')
     plt.show()
 
 

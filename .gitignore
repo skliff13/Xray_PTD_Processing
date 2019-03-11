@@ -26,6 +26,8 @@ c_Process_Files/lungs_segmentation_caffe/test_*
 d_Network_Training/graphs/
 d_Network_Training/models/
 d_Network_Training/classifiers/
+d_Network_Training_Multilabel/graphs/
+d_Network_Training_Multilabel/models/
 *.cmd
 *.hdf5
 e_Deploy/test_data/
