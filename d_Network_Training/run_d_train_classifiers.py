@@ -34,7 +34,7 @@ def compose_data(paths, d, class_names):
 
 
 def main():
-    with open('setup_vgg19_1.json', 'r') as f:
+    with open('setup_inceptionv3_1.json', 'r') as f:
         d = json.load(f)
 
     data_dir = d['data_dir']
@@ -49,9 +49,12 @@ def main():
     file_path = os.path.join(predictions_dir, desc_layer_name + '_descs_train.txt')
     print('Loading ' + file_path)
     df_train = pd.read_csv(file_path)
+    print(df_train.shape)
+
     file_path = os.path.join(predictions_dir, desc_layer_name + '_descs_val.txt')
     print('Loading ' + file_path)
     df_val = pd.read_csv(file_path)
+    print(df_val.shape)
 
     paths_train = df_train['path']
     paths_val = df_val['path']

@@ -5,7 +5,11 @@ import pandas as pd
 def main():
     data_dir = '/home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0'
 
-    class_names = ['class_number', 'pneumonia', 'tuberculosis']
+    # class_names = ['class_number', 'pneumonia', 'tuberculosis']
+    class_names = ['class_number', 'bronchitis', 'emphysema', 'fibrosis', 'focal_shadows', 'pneumonia',
+                   'pneumosclerosis', 'tuberculosis']
+
+    num_classes = len(class_names)
 
     classes_of_case = read_classes_to_dict(class_names)
 
@@ -31,7 +35,7 @@ def main():
             for j in range(len(class_names)):
                 class_numbers[j].append(l[j])
 
-        out_path = os.path.join(data_dir, train_val + '_multilabel.txt')
+        out_path = os.path.join(data_dir, (train_val + '_%icl.txt') % num_classes)
 
         d = {'a_path': paths}
         for j in range(len(class_names)):

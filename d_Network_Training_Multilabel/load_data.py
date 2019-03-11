@@ -20,12 +20,12 @@ def process_item(data_dir, data_shape, item_classes, item_path, x, y, i, df):
         y.append(np.array(item_classes))
 
 
-def load_data(data_dir, data_shape, shuffle_lines=True):
+def load_data(data_dir, data_shape, num_classes, shuffle_lines=True):
     print('Loading data from ' + data_dir)
 
     x_train_val = []
     y_train_val = []
-    for filename in ['train_multilabel.txt', 'val_multilabel.txt']:
+    for filename in ['train_%icl.txt' % num_classes, 'val_%icl.txt' % num_classes]:
         x = []
         y = []
 
