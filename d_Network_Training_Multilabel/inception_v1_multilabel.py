@@ -246,7 +246,7 @@ def InceptionV1(include_top=True,
         # x = x[:, 1:]  # ??Shift up so that first class ('blank background') vanishes
         # Would be more efficient to strip off position[0] from the weights+bias terms directly in 'Logits'
 
-        x = Activation('softmax', name='Predictions')(x)
+        x = Activation('sigmoid', name='Predictions')(x)
     else:
         if pooling == 'avg':
             x = GlobalAveragePooling2D(name='global_pooling')(x)

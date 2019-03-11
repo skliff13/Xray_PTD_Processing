@@ -3,18 +3,18 @@ import json
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
 config = tf.ConfigProto()
-config.gpu_options.per_process_gpu_memory_fraction = 0.6
-config.gpu_options.visible_device_list = "1"
+config.gpu_options.per_process_gpu_memory_fraction = 0.8
+config.gpu_options.visible_device_list = "0"
 set_session(tf.Session(config=config))
 import keras
 from sklearn.metrics import roc_auc_score
 from keras_applications.inception_resnet_v2 import InceptionResNetV2
-from keras.applications.inception_v3 import InceptionV3
-from vgg16_multilabel import VGG16
-from keras.applications.vgg19 import VGG19
 from keras_applications.resnet50 import ResNet50
 
-from inception_v1 import InceptionV1
+from inception_v3_multilabel import InceptionV3
+from vgg16_multilabel import VGG16
+from vgg19_multilabel import VGG19
+from inception_v1_multilabel import InceptionV1
 from data_gen import ModifiedDataGenerator
 from load_data import load_data
 
@@ -135,6 +135,6 @@ def main():
 
 
 if __name__ == '__main__':
-    os.sys.argv = 'train_model.py 16 /home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0 30 224 0.00001 ' \
-                  'VGG16 3 Adam -1'.split(' ')
+    os.sys.argv = 'train_model.py 16 /home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0 60 224 0.00001 ' \
+                  'VGG19 3 Adam -1'.split(' ')
     main()
