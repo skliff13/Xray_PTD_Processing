@@ -1,8 +1,13 @@
 import os
-if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = ''
+import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
+config = tf.ConfigProto()
+config.gpu_options.per_process_gpu_memory_fraction = 0.4
+config.gpu_options.visible_device_list = "1"
+set_session(tf.Session(config=config))
 import keras
 import json
+import pathlib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -17,12 +22,6 @@ from load_data import load_val_data
 
 
 def evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer):
-    data_shape = (image_sz, image_sz)
-    (x_val, y_val) = load_val_data(data_dir, data_shape)
-    y_val = keras.utils.to_categorical(y_val, num_classes)
-
-    model = model_type(weights=None, include_top=True, input_shape=(image_sz, image_sz, 1), classes=num_classes)
-
     json_path = os.path.join(data_dir, 'config.json')
     print('Reading config from ' + json_path)
     with open(json_path, 'r') as f:
@@ -37,15 +36,36 @@ def evaluate_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_
         print('\n### File not found: ' + pattern + '\n')
 
         return None, None, None
+
+    weights_path = files[0]
+
+    model_filename = os.path.split(weights_path)[-1]
+    pred_dir = os.path.join(data_dir, 'predictions', model_filename[:-5])
+    pathlib.Path(pred_dir).mkdir(parents=True, exist_ok=True)
+
+    pred_path = os.path.join(pred_dir, 'pred_val.txt')
+    if os.path.isfile(pred_path):
+        predictions = pd.read_csv(pred_path, header=None).get_values()
+        df = pd.read_csv(os.path.join(data_dir, 'val.txt'), header=None, sep=' ')
+        y_val = df[1].get_values()
+
     else:
-        print('Loading model ' + files[0])
-        model.load_weights(files[0])
-        # model = keras.models.load_model(files[0])
+        data_shape = (image_sz, image_sz)
+        (x_val, y_val) = load_val_data(data_dir, data_shape)
+
+        model = model_type(weights=None, include_top=True, input_shape=(image_sz, image_sz, 1), classes=num_classes)
+
+        print('Loading model ' + weights_path)
+        model.load_weights(weights_path)
 
         print('Predicting values')
         predictions = model.predict(x_val, batch_size=batch_size)
 
-        return predictions, files[0], y_val
+        df = pd.DataFrame(data=predictions)
+        df.to_csv(pred_path)
+
+    y_val = keras.utils.to_categorical(y_val, num_classes)
+    return predictions, weights_path, y_val
 
 
 def main():
