@@ -3,8 +3,8 @@ import json
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
 config = tf.ConfigProto()
-config.gpu_options.per_process_gpu_memory_fraction = 0.6
-config.gpu_options.visible_device_list = "1"
+config.gpu_options.per_process_gpu_memory_fraction = 0.8
+config.gpu_options.visible_device_list = "0"
 set_session(tf.Session(config=config))
 import keras
 from sklearn.metrics import roc_auc_score
@@ -77,7 +77,6 @@ def train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_typ
     if crop_to > 0:
         x_val = val_gen.crop_data_bacth(x_val)
 
-    print(x_val.shape)
     predictions = model.predict(x_val, batch_size=batch_size)
     mean_auc = 0.0
     for j in range(num_classes):
@@ -135,6 +134,6 @@ def main():
 
 
 if __name__ == '__main__':
-    os.sys.argv = 'train_model.py 16 /home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0 30 224 0.00001 ' \
-                  'VGG16 8 Adam -1'.split(' ')
+    os.sys.argv = 'train_model.py 16 /home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0 30 299 0.00001 ' \
+                  'InceptionV3 8 Adam -1'.split(' ')
     main()
