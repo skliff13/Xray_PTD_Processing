@@ -16,9 +16,9 @@ from cropping import Cropping
 
 
 class XrayPredictor:
-    def __init__(self, setup_file_path):
+    def __init__(self, setup_file_path, multi_label=False):
         self.prediction_setting = XrayPredictionSettings().load_setup(setup_file_path)
-        self.models = ModelsLoader().load_models(self.prediction_setting)
+        self.models = ModelsLoader().load_models(self.prediction_setting, multi_label=multi_label)
         self.img_original = None
         self.mask = None
         self.img_roi = None

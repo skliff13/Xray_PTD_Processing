@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from skimage import io
 
 from xray_predictor import XrayPredictor
+from xray_predictor_multi import XrayPredictorMulti
 
 
 def pred2str(predictions, items_per_row=3):
@@ -54,7 +55,8 @@ def save_or_plot_combined_image(elapsed, img_normalized, input_image_path, predi
 def main():
     warnings.filterwarnings('ignore')
 
-    xp = XrayPredictor('setup_vgg19_1.json')
+    # xp = XrayPredictor('setup_vgg19_1.json')
+    xp = XrayPredictorMulti('setup_vgg16m_1.json')
 
     to_plot = False
     plt.figure(figsize=(10, 7))
