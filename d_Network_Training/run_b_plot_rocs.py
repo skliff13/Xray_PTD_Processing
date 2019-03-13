@@ -75,7 +75,7 @@ def main():
     tests = list()
     tests.append([VGG16, 224, 'models/abnormal_lungs_v2.0_Sz224_VGG16_Adam_Ep30_Lr1.0e-05_Auc0.851.hdf5'])
     tests.append([VGG19, 224, 'models/abnormal_lungs_v2.0_Sz224_VGG19_Adam_Ep30_Lr1.0e-05_Auc0.847.hdf5'])
-    tests.append([InceptionV3, 299, 'models/abnormal_lungs_v2.0_Sz299_InceptionV3_RMSprop_Ep50_Lr1.0e-04_Auc0.880.hdf5'])
+    tests.append([InceptionV3, 299, 'models/abnormal_lungs_v2.0_Sz299_InceptionV3_Adam_Ep30_Lr1.0e-05_Auc0.841.hdf5'])
 
     df = pd.read_csv(os.path.join(data_dir, 'val.txt'), header=None, sep=' ')
     y_val = df[1].get_values()
@@ -90,8 +90,8 @@ def main():
     # make_combined(d)
 
     lw = 2
-    # plt.figure(figsize=(4.5, 4.5), dpi=600)
-    plt.figure(figsize=(6, 6))
+    plt.figure(figsize=(4.5, 4.5), dpi=600)
+    # plt.figure(figsize=(6, 6))
     plt.plot([0, 1], [0, 1], color='lime', lw=lw, linestyle='--', label='baseline')
 
     line_styles = [':', '-.', '-']
@@ -113,8 +113,8 @@ def main():
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.legend(loc='lower right', prop={'size': 10})
-    # plt.savefig('fig.png')
-    plt.show()
+    plt.savefig('fig.png')
+    # plt.show()
 
 
 if __name__ == '__main__':

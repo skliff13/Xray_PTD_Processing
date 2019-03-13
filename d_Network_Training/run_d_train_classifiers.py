@@ -34,7 +34,7 @@ def compose_data(paths, d, class_names):
 
 
 def main():
-    with open('setup_inceptionv3_1.json', 'r') as f:
+    with open('setup_inceptionv3_2.json', 'r') as f:
         d = json.load(f)
 
     data_dir = d['data_dir']
@@ -101,6 +101,7 @@ def main():
             store_path = os.path.join(out_dir, 'logit-%s+%s.pickle' % (class_name, add_str))
         else:
             store_path = os.path.join(out_dir, 'logit-%s.pickle' % class_name)
+        print('Saving to ' + store_path)
         pickle.dump(classifier_model, open(store_path, 'wb'))
 
 

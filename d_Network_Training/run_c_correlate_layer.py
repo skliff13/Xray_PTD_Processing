@@ -134,7 +134,7 @@ def main():
     num_classes = 2
     batch_size = 16
 
-    with open('setup_vgg19_1.json', 'r') as f:
+    with open('setup_inceptionv3_2.json', 'r') as f:
         d = json.load(f)
 
     image_sz = d['image_sz']
