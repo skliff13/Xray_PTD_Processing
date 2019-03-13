@@ -3,7 +3,7 @@ import json
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
 config = tf.ConfigProto()
-config.gpu_options.per_process_gpu_memory_fraction = 0.8
+config.gpu_options.per_process_gpu_memory_fraction = 0.7
 config.gpu_options.visible_device_list = "0"
 set_session(tf.Session(config=config))
 import keras
@@ -20,6 +20,20 @@ from load_data import load_data
 
 
 def train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_type, num_classes, optimizer, crop_to):
+    json_path = os.path.join(data_dir, 'config.json')
+    print('Reading config from ' + json_path)
+    with open(json_path, 'r') as f:
+        config = json.load(f)
+
+    if not os.path.isdir('models'):
+        os.mkdir('models')
+
+    pattern = 'models/%s_%icl_Sz%i_Cr%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
+    pattern = pattern % (config['dataset'], num_classes, image_sz, crop_to, model_type.__name__,
+                         optimizer.__class__.__name__, epochs, learning_rate)
+
+    print('\n### Running training for ' + pattern + '\n')
+
     data_shape = (image_sz, image_sz)
     (x_train, y_train), (x_val, y_val) = load_data(data_dir, data_shape, num_classes)
 
@@ -30,20 +44,6 @@ def train_model(batch_size, data_dir, epochs, image_sz, learning_rate, model_typ
 
     model = model_type(weights=None, include_top=True, input_shape=(final_image_sz, final_image_sz, 1),
                        classes=num_classes)
-
-    json_path = os.path.join(data_dir, 'config.json')
-    print('Reading config from ' + json_path)
-    with open(json_path, 'r') as f:
-        config = json.load(f)
-
-    if not os.path.isdir('models'):
-        os.mkdir('models')
-
-    pattern = 'models/%s_%icl_Sz%i_%s_%s_Ep%i_Lr%.1e*.hdf5'
-    pattern = pattern % (config['dataset'], num_classes, image_sz, model_type.__name__, optimizer.__class__.__name__,
-                         epochs, learning_rate)
-
-    print('\n### Running training for ' + pattern + '\n')
 
     model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
@@ -134,6 +134,6 @@ def main():
 
 
 if __name__ == '__main__':
-    os.sys.argv = 'train_model.py 16 /home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0 30 299 0.00001 ' \
-                  'InceptionV3 8 Adam -1'.split(' ')
+    os.sys.argv = 'train_model.py 16 /home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0 40 256 0.00001 ' \
+                  'VGG16 3 Adam 224'.split(' ')
     main()

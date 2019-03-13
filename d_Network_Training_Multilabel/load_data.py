@@ -134,9 +134,9 @@ def __get_batches(data_dir, batch_size, filename):
     counter = 0
     for _, row in df.iterrows():
         item_path = row[0]
-        item_class = row[1]
+        item_classes = np.array(row[1:]).astype(int)
 
-        batch.append((item_path, item_class))
+        batch.append((item_path, item_classes))
 
         counter += 1
         if counter == batch_size:
@@ -150,12 +150,12 @@ def __get_batches(data_dir, batch_size, filename):
     return batches, df.shape[0]
 
 
-def get_train_batches(data_dir, batch_size):
-    return __get_batches(data_dir, batch_size, 'train.txt')
+def get_train_batches(data_dir, batch_size, num_classes):
+    return __get_batches(data_dir, batch_size, 'train_%icl.txt' % num_classes)
 
 
-def get_val_batches(data_dir, batch_size):
-    return __get_batches(data_dir, batch_size, 'val.txt')
+def get_val_batches(data_dir, batch_size, num_classes):
+    return __get_batches(data_dir, batch_size, 'val_%icl.txt' % num_classes)
 
 
 def load_batch(data_dir, data_shape, batch):
