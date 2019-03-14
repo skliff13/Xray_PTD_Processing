@@ -50,10 +50,12 @@ def main():
         print('\nClass: ' + class_name)
         q = tpr - fpr
         print('  max Quality at threshold %.4f' % thre[q == q.max()][0])
+        print('  0.95 TPR at threshold %.4f (FPR = %.2f)' % (thre[tpr > 0.95][0], fpr[tpr > 0.95][0]))
         print('  0.90 TPR at threshold %.4f (FPR = %.2f)' % (thre[tpr > 0.9][0], fpr[tpr > 0.9][0]))
         print('  0.80 TPR at threshold %.4f (FPR = %.2f)' % (thre[tpr > 0.8][0], fpr[tpr > 0.8][0]))
         print('  0.20 FPR at threshold %.4f (TPR = %.2f)' % (thre[fpr > 0.2][0], tpr[fpr > 0.2][0]))
         print('  0.10 FPR at threshold %.4f (TPR = %.2f)' % (thre[fpr > 0.1][0], tpr[fpr > 0.1][0]))
+        print('  0.05 FPR at threshold %.4f (TPR = %.2f)' % (thre[fpr > 0.05][0], tpr[fpr > 0.05][0]))
 
         roc_auc = auc(fpr, tpr)
 

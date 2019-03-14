@@ -87,10 +87,24 @@ class InfoBar:
         text = 'Image resolution: %i x %i' % (img.shape[1], img.shape[0])
         self.img_resolution_label.config(text=text)
 
+        thresholds = {'abnormal_lungs': (0.35, 0.729),
+                      'pneumonia': (0.0577, 0.164),
+                      'tuberculosis': (0.064, 0.386)}
+
         for class_name in predictions:
             label = self.class_labels[class_name]
-            text = '%s : %.02f' % (class_name.replace('_', ' '), predictions[class_name])
-            label.config(text=text)
+            p = predictions[class_name]
+            text = '%s : %.02f' % (class_name.replace('_', ' '), p)
+
+            ts = thresholds[class_name]
+            if p > ts[1]:
+                clr = 'red'
+            elif p > ts[0]:
+                clr = 'dark orange'
+            else:
+                clr = 'black'
+
+            label.config(text=text, fg=clr)
 
 
 class MainWindow(Tk):
