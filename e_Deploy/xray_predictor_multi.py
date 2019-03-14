@@ -33,10 +33,17 @@ class XrayPredictorMulti(XrayPredictor):
     def predict_classes(self, _, prob):
         s: XrayPredictionSettings = self.prediction_setting
 
+        multipliers = {'tuberculosis': 20}
+
         predictions = {}
         counter = 0
         for class_name in s.class_names:
             prediction = prob[counter]
+
+            if class_name in multipliers:
+                prediction *= multipliers[class_name]
+                prediction = prediction if prediction < 1 else 1
+
             predictions[class_name] = round(float(prediction), 3)
             counter += 1
 
