@@ -13,6 +13,7 @@ from tkinter.filedialog import askopenfilename
 
 from imutils import imresize, to_uint8
 from xray_predictor import XrayPredictor
+from xray_predictor_multi import XrayPredictorMulti
 
 
 class MainMenu:
@@ -66,7 +67,9 @@ class InfoBar:
 
         self.__add_label('Prediction results', anchor=N)
         self.class_labels = {}
-        class_names = ['abnormal_lungs'] + class_names
+        if 'abnormal_lungs' not in class_names:
+            class_names = ['abnormal_lungs'] + class_names
+
         for class_name in class_names:
             self.class_labels[class_name] = self.__add_label(class_name.replace('_', ' ') + ' : ')
 
@@ -120,12 +123,13 @@ class MainWindow(Tk):
         self.preview = empty_preview
 
         warnings.filterwarnings('ignore')
-        self.xray_predictor = XrayPredictor(setup_file_path)
+        # self.xray_predictor = XrayPredictor(setup_file_path)
+        self.xray_predictor = XrayPredictorMulti(setup_file_path)
 
         self.mainloop()
 
     def open_xray_image(self, event=None):
-        formats = '*.jpg *.png *.bmp *.jpeg *.dcm *.JPG *.JPEG *.PNG *.BMP *.DCM'
+        formats = '*.jpg *.png *.bmp *.jpeg *.dcm *.JPG *.JPEG *.PNG *.BMP *.DCM *.DICOM'
         file_path = askopenfilename(initialdir='test_data/',
                                     filetypes=(('Image or DICOM files', formats), ('All Files', '*.*')),
                                     title='Choose a file.')
@@ -158,4 +162,4 @@ class MainWindow(Tk):
 
 
 if __name__ == '__main__':
-    MainWindow('setup_vgg16_1.json')
+    MainWindow('setup_vgg16m_1.json')

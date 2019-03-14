@@ -49,7 +49,9 @@ def save_or_plot_combined_image(elapsed, img_normalized, input_image_path, predi
         title = '%s+heat (%.2f sec)\n' % (input_image_path, elapsed)
         title += pred2str(predictions)
         plt.title(title)
-        plt.pause(1.0)
+        out_path = '%s+plot-abnorm%.02f.png' % (input_image_path, prob)
+        plt.savefig(out_path)
+        plt.pause(0.1)
 
 
 def main():
@@ -58,10 +60,10 @@ def main():
     # xp = XrayPredictor('setup_vgg19_1.json')
     xp = XrayPredictorMulti('setup_vgg16m_1.json')
 
-    to_plot = False
+    to_plot = True
     plt.figure(figsize=(10, 7))
 
-    dir_with_images = 'test_data/val'
+    dir_with_images = 'test_data/'
     files = os.listdir(dir_with_images)
     for file in files:
         input_image_path = os.path.join(dir_with_images, file)
