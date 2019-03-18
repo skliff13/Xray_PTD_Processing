@@ -68,17 +68,19 @@ def make_combined(d):
 
 
 def main():
-    num_classes = 8
+    num_classes = 3
     data_dir = '/home/skliff13/work/PTD_Xray/datasets/abnormal_lungs/v2.0'
     batch_size = 16
 
     tests = list()
+    # tests.append([VGG16, 224, '../d_Network_Training_Multilabel/models/'
+    #                           'abnormal_lungs_v2.0_8cl_Sz224_VGG16_Adam_Ep30_Lr1.0e-05_MeanAuc0.848.hdf5'])
+    # tests.append([VGG19, 224, '../d_Network_Training_Multilabel/models/'
+    #                           'abnormal_lungs_v2.0_8cl_Sz224_VGG19_Adam_Ep30_Lr1.0e-05_MeanAuc0.847.hdf5'])
+    # tests.append([InceptionV3, 299, '../d_Network_Training_Multilabel/models/'
+    #                                 'abnormal_lungs_v2.0_8cl_Sz299_InceptionV3_Adam_Ep30_Lr1.0e-05_MeanAuc0.852.hdf5'])
     tests.append([VGG16, 224, '../d_Network_Training_Multilabel/models/'
-                              'abnormal_lungs_v2.0_8cl_Sz224_VGG16_Adam_Ep30_Lr1.0e-05_MeanAuc0.848.hdf5'])
-    tests.append([VGG19, 224, '../d_Network_Training_Multilabel/models/'
-                              'abnormal_lungs_v2.0_8cl_Sz224_VGG19_Adam_Ep30_Lr1.0e-05_MeanAuc0.847.hdf5'])
-    tests.append([InceptionV3, 299, '../d_Network_Training_Multilabel/models/'
-                                    'abnormal_lungs_v2.0_8cl_Sz299_InceptionV3_Adam_Ep30_Lr1.0e-05_MeanAuc0.852.hdf5'])
+                              'abnormal_lungs_v2.0_Sz224_VGG16_Adam_Ep30_Lr1.0e-05_MeanAuc0.883.hdf5'])
 
     df = pd.read_csv(os.path.join(data_dir, 'val.txt'), header=None, sep=' ')
     y_val = df[1].get_values()
