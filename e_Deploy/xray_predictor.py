@@ -51,7 +51,7 @@ class XrayPredictor:
         ext = os.path.splitext(input_image_path)[-1].lower()
         if ext in ['.jpg', '.png', '.bmp', '.jpeg']:
             img_original = io.imread(input_image_path)
-        elif ext in ['.dcm']:
+        elif ext in ['.dcm', '.dicom', '']:
             dcm = pydicom.dcmread(input_image_path)
             img_original = dcm.pixel_array
         else:

@@ -143,9 +143,9 @@ class MainWindow(Tk):
         self.mainloop()
 
     def open_xray_image(self, event=None):
-        formats = '*.jpg *.png *.bmp *.jpeg *.dcm *.JPG *.JPEG *.PNG *.BMP *.DCM *.DICOM'
-        file_path = askopenfilename(initialdir='test_data/',
-                                    filetypes=(('Image or DICOM files', formats), ('All Files', '*.*')),
+        formats = '*.jpg *.png *.bmp *.jpeg *.dcm *.dicom *.JPG *.JPEG *.PNG *.BMP *.DCM *.DICOM'
+        file_path = askopenfilename(initialdir='/home/skliff13/Downloads/',
+                                    filetypes=(('Image or DICOM files', formats), ('All Files', '*')),
                                     title='Choose a file.')
 
         self.status_bar.set_status('Processing image ' + file_path)
