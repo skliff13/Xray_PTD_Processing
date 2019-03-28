@@ -31,7 +31,7 @@ def process_db_file(db_path, class_of_interest):
 def list_class():
     db_paths = ['../data/PTD1_BASA_CLD.GDB.sqlite', '../data/PTD2_BASA_CLD.GDB.sqlite']
 
-    class_of_interest = 'class_abnormal_lungs'
+    class_of_interest = 'class_pneumonia'
     print('\nClass of interest: ' + class_of_interest)
 
     met_card_numbers = set()
@@ -58,6 +58,7 @@ def list_class():
                 print(i)
 
             path = record[0]
+            path = path.replace('\\', '/')
             filename = os.path.split(path)[1]
             card_number = int(filename.split('_')[0])
 

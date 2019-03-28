@@ -129,16 +129,16 @@ def process_row(out_img_dir, row, data_dirs, to_augment, to_crop, to_noise, batc
 
 
 def prepare_dataset():
-    data_dirs = ['e:/', 'f:/']
+    data_dirs = ['/hdd_purple/PTD_Xray/Xray_PTD_Copy512']
 
-    class_of_interest = 'abnormal_lungs'
+    class_of_interest = 'pneumonia'
 
     to_augment = False
     to_crop = False
     to_noise = False
     out_size = 512
 
-    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'list')
+    out_dir = os.path.join('/home/skliff13/work/PTD_Xray/datasets', class_of_interest + '_list')
 
     out_img_dir = os.path.join(out_dir, 'img')
     print('Making dir ' + out_img_dir)

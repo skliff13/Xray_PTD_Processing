@@ -58,23 +58,24 @@ def save_batch(batch, batch_counter, batch_filenames, out_img_dir, item_counter,
 
 
 def prepare_previews():
-    data_dirs = ['e:/', 'f:/']
+    data_dirs = ['/hdd_purple/PTD_Xray/Xray_PTD_Copy512']
 
     # class_of_interest = 'healthy'
-    class_of_interest = 'tuberculosis'
+    # class_of_interest = 'tuberculosis'
     # class_of_interest = 'abnormal_lungs'
+    class_of_interest = 'pneumonia'
     preview_size = 256
 
     batch_size = 100
 
-    out_dir = os.path.join('d:/DATA/PTD/new/', class_of_interest, 'v2.5')
+    out_dir = os.path.join('/home/skliff13/work/PTD_Xray/datasets', class_of_interest + '_list')
 
     out_img_dir = os.path.join(out_dir, 'img_previews')
     print('Making dir ' + out_img_dir)
     pathlib.Path(out_img_dir).mkdir(parents=True, exist_ok=True)
 
-    study_group_filepath = '../data/study_group_class_' + class_of_interest + '.txt'
-    # study_group_filepath = '../data/list_class_' + class_of_interest + '.txt'
+    # study_group_filepath = '../data/study_group_class_' + class_of_interest + '.txt'
+    study_group_filepath = '../data/list_class_' + class_of_interest + '.txt'
     df = pd.read_csv(study_group_filepath)
 
     if batch_size > 1:
