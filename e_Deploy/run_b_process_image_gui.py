@@ -3,10 +3,8 @@ import json
 import time
 import warnings
 import numpy as np
-import matplotlib.pyplot as plt
 import PIL
 from PIL import ImageTk
-from skimage import io
 from tkinter import *
 from tkinter import messagebox
 from tkinter.filedialog import askopenfilename
@@ -18,18 +16,19 @@ from xray_predictor_multi import XrayPredictorMulti
 
 class MainMenu:
     def __init__(self, root):
-        self.root = root
-        self.menu = Menu(root)
+        self.root: MainWindow = root
+        font = self.root.gui_settings['menu_font']
+        self.menu = Menu(root, font=font)
         root.config(menu=self.menu)
 
-        submenu = Menu(self.menu, tearoff=False)
+        submenu = Menu(self.menu, tearoff=False, font=font)
         self.menu.add_cascade(label='File', menu=submenu)
         submenu.add_command(label='Open X-ray image (Ctrl+O)', command=self.root.open_xray_image)
         self.root.bind_all("<Control-o>", self.root.open_xray_image)
         submenu.add_separator()
         submenu.add_command(label='Exit', command=root.destroy)
 
-        submenu = Menu(self.menu, tearoff=False)
+        submenu = Menu(self.menu, tearoff=False, font=font)
         self.menu.add_cascade(label='Help', menu=submenu)
         submenu.add_command(label='About', command=self.about)
         self.root.bind_all("<F1>", self.about)
@@ -45,9 +44,10 @@ class MainMenu:
 
 class StatusBar:
     def __init__(self, root):
-        self.label = Label(root, text='Initialization...', bd=1, relief=SUNKEN, anchor=W)
+        self.root: MainWindow = root
+        font = self.root.gui_settings['status_font']
+        self.label = Label(root, text='Initialization...', bd=1, relief=SUNKEN, anchor=W, font=font)
         self.label.pack(side=BOTTOM, fill=X)
-        self.root = root
 
     def set_status(self, string):
         self.label.config(text=string)
@@ -74,9 +74,12 @@ class InfoBar:
             self.class_labels[class_name] = self.__add_label(class_name.replace('_', ' ') + ' : ')
 
     def __add_label(self, text, anchor=NW):
-        label = Label(self.frame, width=40, text=text, anchor=anchor, justify=LEFT, bd=4)
+        width = self.root.gui_settings['panel_width']
+        font = self.root.gui_settings['captions_font']
+
+        label = Label(self.frame, width=width, text=text, anchor=anchor, justify=LEFT, bd=4, font=font)
         if anchor != NW:
-            label.config(font='Helvetica 12 bold')
+            label.config(font=font + ' bold')
         label.pack(side=TOP)
         return label
 
@@ -111,13 +114,14 @@ class MainWindow(Tk):
     def __init__(self, setup_file_path):
         Tk.__init__(self)
 
+        with open('gui_settings.json', 'r') as f:
+            self.gui_settings = json.load(f)
+
         with open(setup_file_path, 'r') as f:
             self.setup = json.load(f)
 
-        self.app_version = '0.1'
+        self.app_version = '0.2'
         self.title('X-ray Predictor v' + self.app_version)
-        self.max_img_width = 950
-        self.max_img_height = 650
 
         img = Image("photo", file="images/icon320a.png")
         self.tk.call('wm', 'iconphoto', self._w, img)
@@ -127,8 +131,8 @@ class MainWindow(Tk):
         self.status_bar.set_status('Ready')
         self.info_bar = InfoBar(self, self.setup['class_names'])
 
-        w = self.max_img_width
-        h = self.max_img_height
+        w = self.gui_settings['max_img_width']
+        h = self.gui_settings['max_img_height']
         empty_preview = PIL.Image.fromarray(np.ones((h, w, 3), dtype=np.uint8) * 127)
         empty_preview = ImageTk.PhotoImage(empty_preview)
         preview_label = Label(self, width=w, height=h, image=empty_preview, bd=2, anchor=NW, relief=SUNKEN)
@@ -148,6 +152,9 @@ class MainWindow(Tk):
                                     filetypes=(('Image or DICOM files', formats), ('All Files', '*')),
                                     title='Choose a file.')
 
+        if file_path is None:
+            return
+
         self.status_bar.set_status('Processing image ' + file_path)
         start = time.time()
         predictions, rgb, img_normalized = self.xray_predictor.load_and_predict_image(file_path)
@@ -164,7 +171,9 @@ class MainWindow(Tk):
             combined[:, :, c] = img_normalized
         combined = np.concatenate((combined, rgb), axis=1)
 
-        rs = min(self.max_img_height / combined.shape[0], self.max_img_width / combined.shape[1])
+        w = self.gui_settings['max_img_width']
+        h = self.gui_settings['max_img_height']
+        rs = min(h / combined.shape[0], w / combined.shape[1])
         new_shape = (int(combined.shape[0] * rs), int(combined.shape[1] * rs))
         combined = imresize(combined, new_shape)
         combined = to_uint8(combined)
