@@ -5,8 +5,9 @@ import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io
+from glob import glob
 
-from xray_predictor import XrayPredictor
+# from xray_predictor import XrayPredictor
 from xray_predictor_multi import XrayPredictorMulti
 
 
@@ -54,26 +55,33 @@ def save_or_plot_combined_image(elapsed, img_normalized, input_image_path, predi
         plt.pause(0.1)
 
 
-def main():
-    warnings.filterwarnings('ignore')
-
-    # xp = XrayPredictor('setup_vgg19_1.json')
-    xp = XrayPredictorMulti('setup_vgg16m_1.json')
-
-    to_plot = True
-    plt.figure(figsize=(10, 7))
-
-    dir_with_images = 'test_data/'
+def process_image_dir(dir_with_images, to_plot, xp):
     files = os.listdir(dir_with_images)
     for file in files:
         input_image_path = os.path.join(dir_with_images, file)
-        if '+' not in file and os.path.isfile(input_image_path):
+        if '+' not in file and os.path.isfile(input_image_path) and input_image_path.endswith('.png'):
             start = time.time()
             predictions, rgb, img_normalized = xp.load_and_predict_image(input_image_path)
             elapsed = time.time() - start
             print('Time elapsed: %.02f sec' % elapsed)
 
             save_or_plot_combined_image(elapsed, img_normalized, input_image_path, predictions, rgb, to_plot)
+
+
+def main():
+    warnings.filterwarnings('ignore')
+
+    # xp = XrayPredictor('setup_vgg19_1.json')
+    xp = XrayPredictorMulti('setup_vgg16m_1.json')
+    to_plot = False
+    plt.figure(figsize=(10, 7))
+
+    meta_dir = '/hdd_purple/ImageGeneration/Xray/generated_per_age_by_10k/unpacked'
+    dirs = glob(os.path.join(meta_dir, 'gen_*'))
+    dirs.sort()
+
+    for dir_with_images in dirs:
+        process_image_dir(dir_with_images, to_plot, xp)
 
 
 if __name__ == '__main__':
