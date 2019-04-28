@@ -4,7 +4,7 @@ import time
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt
-from skimage import io
+from skimage import io, transform
 from glob import glob
 
 # from xray_predictor import XrayPredictor
@@ -32,15 +32,25 @@ def pred2str(predictions, items_per_row=3):
     return '\n'.join(rows)
 
 
-def save_or_plot_combined_image(elapsed, img_normalized, input_image_path, predictions, rgb, to_plot):
+def save_or_plot_combined_image(elapsed, img_normalized, input_image_path, predictions, rgb, to_plot, xp):
     tmp = rgb * 0
     for c in range(3):
         tmp[:, :, c] = img_normalized
+
     combined = np.concatenate((tmp, rgb), axis=1)
     prob = predictions['abnormal_lungs']
+
     if not to_plot:
         out_path = '%s+heat-abnorm%.02f.png' % (input_image_path, prob)
         io.imsave(out_path, combined)
+
+        hm = transform.resize(xp.heat_map, xp.mask.shape)
+        predictions['heat_max'] = np.max(hm)
+        predictions['heat_mean'] = np.mean(hm)
+
+        hm *= xp.mask
+        predictions['lung_heat_max'] = np.max(hm)
+        predictions['lung_heat_mean'] = np.mean(hm)
 
         out_path = '%s+heat-abnorm%.02f.json' % (input_image_path, prob)
         with open(out_path, 'w') as f:
@@ -65,7 +75,7 @@ def process_image_dir(dir_with_images, to_plot, xp):
             elapsed = time.time() - start
             print('Time elapsed: %.02f sec' % elapsed)
 
-            save_or_plot_combined_image(elapsed, img_normalized, input_image_path, predictions, rgb, to_plot)
+            save_or_plot_combined_image(elapsed, img_normalized, input_image_path, predictions, rgb, to_plot, xp)
 
 
 def main():

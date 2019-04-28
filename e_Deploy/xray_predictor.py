@@ -22,6 +22,7 @@ class XrayPredictor:
         self.img_original = None
         self.mask = None
         self.img_roi = None
+        self.heat_map = None
 
     def load_and_predict_image(self, input_image_path):
         self.img_original = self.load_original_image(input_image_path)
@@ -41,6 +42,7 @@ class XrayPredictor:
         rgb = self.make_colored(img_normalized, mask, heat_map, cropping)
 
         self.mask = mask
+        self.heat_map = heat_map
         self.img_roi = img_roi
         return predictions, rgb, img_normalized
 
